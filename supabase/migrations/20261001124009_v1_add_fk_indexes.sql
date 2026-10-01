@@ -1,0 +1,12 @@
+create index contest_entries_contest_idx on public.contest_entries(contest_id);
+create index entity_tags_tag_idx on public.entity_tags(tag_id);
+create index movie_companies_company_idx on public.movie_companies(company_id);
+create index ott_availability_platform_idx on public.ott_availability(platform_id);
+create index ott_titles_movie_idx on public.ott_titles(movie_id);
+create index poll_options_poll_idx on public.poll_options(poll_id);
+create index poll_votes_option_idx on public.poll_votes(option_id);
+create index poll_votes_poll_idx on public.poll_votes(poll_id);
+create index reviews_movie_idx on public.reviews(movie_id);
+create index reviews_ott_title_idx on public.reviews(ott_title_id);
+create index short_films_director_idx on public.short_films(director_id);
+create index short_films_video_idx on public.short_films(video_id);
