@@ -18,3 +18,16 @@ export async function saveContent(form:FormData){
  revalidatePath("/cms");revalidatePath("/cms/"+module.slug);redirect("/cms/"+module.slug)
 }
 export async function deleteContent(form:FormData){const {supabase,role}=await staff();if(role!=="admin")throw new Error("Admin role required");const module=getCmsModule(String(form.get("_module")));const id=String(form.get("_id")||"");if(!module||!id)throw new Error("Invalid delete");const {error}=await supabase.from(module.table).delete().eq("id",id);if(error)throw new Error(error.message);revalidatePath("/cms/"+module.slug);redirect("/cms/"+module.slug)}
+
+export async function saveMovieRelationships(form:FormData){
+ const {supabase}=await staff();const movieId=String(form.get("_movie_id")||"");if(!movieId)throw new Error("Movie required");
+ const creditRows=Number(form.get("_credit_rows")||0);const credits:Record<string,unknown>[]=[];
+ for(let i=0;i<creditRows;i++){const personId=String(form.get("credit_person_"+i)||"");if(!personId)continue;credits.push({movie_id:movieId,person_id:personId,credit_type:String(form.get("credit_type_"+i)||"actor"),character_name_en:empty(form.get("character_en_"+i)),character_name_te:empty(form.get("character_te_"+i)),billing_order:form.get("billing_"+i)===""?null:Number(form.get("billing_"+i))})}
+ const companyRows=Number(form.get("_company_rows")||0);const links:Record<string,unknown>[]=[];
+ for(let i=0;i<companyRows;i++){const companyId=String(form.get("company_"+i)||"");if(!companyId)continue;links.push({movie_id:movieId,company_id:companyId,relationship_type:String(form.get("relationship_"+i)||"production").trim()||"production"})}
+ const {error:creditDelete}=await supabase.from("movie_credits").delete().eq("movie_id",movieId);if(creditDelete)throw new Error(creditDelete.message);
+ if(credits.length){const {error}=await supabase.from("movie_credits").insert(credits);if(error)throw new Error(error.message)}
+ const {error:companyDelete}=await supabase.from("movie_companies").delete().eq("movie_id",movieId);if(companyDelete)throw new Error(companyDelete.message);
+ if(links.length){const {error}=await supabase.from("movie_companies").insert(links);if(error)throw new Error(error.message)}
+ revalidatePath("/cms/movies/"+movieId);revalidatePath("/cms/movies");redirect("/cms/movies/"+movieId)
+}
