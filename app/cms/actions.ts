@@ -11,6 +11,18 @@ export async function saveContent(form:FormData){
  const id=String(form.get("_id")||"");const payload:Record<string,unknown>={};
  for(const f of module.fields){const raw=form.get(f.name);if(f.type==="checkbox")payload[f.name]=raw==="on";else if(f.type==="number")payload[f.name]=raw===""||raw===null?null:Number(raw);else payload[f.name]=empty(raw)}
  const now=new Date().toISOString();
+ let ottVideoId:string|null=null;
+ if(module.slug==="ott"){
+  payload.category="ott";
+  const sourceUrl=String(form.get("_ott_video_url")||"").trim();
+  if(sourceUrl){
+   let externalId=""; let platform="video"; try{const u=new URL(sourceUrl);if(u.hostname==="youtu.be"){platform="youtube";externalId=u.pathname.split("/").filter(Boolean)[0]||""}else if(u.hostname.includes("youtube.com")){platform="youtube";externalId=u.searchParams.get("v")||"";if(!externalId){const p=u.pathname.split("/").filter(Boolean);if(["shorts","embed","live"].includes(p[0]))externalId=p[1]||""}}else if(u.hostname.includes("instagram.com"))platform="instagram";else if(u.hostname.includes("facebook.com")||u.hostname.includes("fb.watch"))platform="facebook";else if(u.hostname==="x.com"||u.hostname.includes("twitter.com"))platform="x"}catch{}
+   let video:any=null;const existing=await supabase.from("videos").select("id").eq("video_url",sourceUrl).maybeSingle();if(existing.error)throw new Error(existing.error.message);video=existing.data;
+   if(!video&&externalId){const byId=await supabase.from("videos").select("id").eq("external_id",externalId).maybeSingle();if(byId.error)throw new Error(byId.error.message);video=byId.data}
+   if(!video){const thumb=externalId?`https://i.ytimg.com/vi/${externalId}/maxresdefault.jpg`:payload.hero_image_url||null;const created=await supabase.from("videos").insert({slug:String(payload.slug||externalId||crypto.randomUUID())+"-video",title_en:String(payload.headline_en||"OTT Video"),title_te:payload.headline_te||null,description_en:payload.dek_en||null,description_te:payload.dek_te||null,platform,external_id:externalId||null,video_url:sourceUrl,thumbnail_url:thumb,status:payload.status||"draft",updated_at:now}).select("id").single();if(created.error)throw new Error(created.error.message);video=created.data}
+   ottVideoId=video?.id||null;
+  }
+ }
  if(module.slug==="short-films"){
   const sourceUrl=String(form.get("_short_film_video_url")||"").trim();
   if(sourceUrl){
@@ -26,6 +38,7 @@ export async function saveContent(form:FormData){
  if(hasPublishedAt.has(module.slug)&&payload.status==="published")payload.published_at=now;
  let saved:any,error:any;if(id)({data:saved,error}=await supabase.from(module.table).update(payload).eq("id",id).select().single());else({data:saved,error}=await supabase.from(module.table).insert(payload).select().single());if(error)throw new Error(error.message);
  if(module.entityType&&saved?.id){const canonical=String(saved.slug||saved.id);const {data:entity,error:entityError}=await supabase.from("entity_registry").upsert({entity_type:module.entityType,entity_id:saved.id,canonical_slug:canonical},{onConflict:"entity_type,entity_id"}).select("id").single();if(entityError)throw new Error(entityError.message);if(entity?.id){const {data:item}=await supabase.from("editorial_items").select("id").eq("entity_id",entity.id).maybeSingle();const workflow=saved.status||"draft";const editorial={workflow_status:workflow,published_at:workflow==="published"?now:null,updated_at:now,assigned_editor_ref:user.id};if(item)await supabase.from("editorial_items").update(editorial).eq("id",item.id);else await supabase.from("editorial_items").insert({entity_id:entity.id,...editorial})}}
+ if(module.slug==="ott"&&saved?.id&&ottVideoId){const [from,to]=await Promise.all([supabase.from("entity_registry").select("id").eq("entity_type","news_article").eq("entity_id",saved.id).single(),supabase.from("entity_registry").upsert({entity_type:"video",entity_id:ottVideoId,canonical_slug:String(payload.slug||ottVideoId)+"-video"},{onConflict:"entity_type,entity_id"}).select("id").single()]);if(from.error)throw new Error(from.error.message);if(to.error)throw new Error(to.error.message);const metadata={editorial_type:String(form.get("_ott_editorial_type")||"ott_news"),platform:String(form.get("_ott_platform")||""),title_name:String(form.get("_ott_title_name")||""),release_date:String(form.get("_ott_release_date")||"")};await supabase.from("entity_relations").delete().eq("from_entity_id",from.data.id).eq("relation_type","featured_video");const rel=await supabase.from("entity_relations").insert({from_entity_id:from.data.id,to_entity_id:to.data.id,relation_type:"featured_video",sort_order:0,metadata});if(rel.error)throw new Error(rel.error.message)}
  revalidatePath("/cms");revalidatePath("/cms/"+module.slug);redirect("/cms/"+module.slug)
 }
 export async function deleteContent(form:FormData){const {supabase,role}=await staff();if(role!=="admin")throw new Error("Admin role required");const module=getCmsModule(String(form.get("_module")));const id=String(form.get("_id")||"");if(!module||!id)throw new Error("Invalid delete");const {error}=await supabase.from(module.table).delete().eq("id",id);if(error)throw new Error(error.message);revalidatePath("/cms/"+module.slug);redirect("/cms/"+module.slug)}
