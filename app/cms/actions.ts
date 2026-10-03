@@ -11,6 +11,17 @@ export async function saveContent(form:FormData){
  const id=String(form.get("_id")||"");const payload:Record<string,unknown>={};
  for(const f of module.fields){const raw=form.get(f.name);if(f.type==="checkbox")payload[f.name]=raw==="on";else if(f.type==="number")payload[f.name]=raw===""||raw===null?null:Number(raw);else payload[f.name]=empty(raw)}
  const now=new Date().toISOString();
+ if(module.slug==="short-films"){
+  const sourceUrl=String(form.get("_short_film_video_url")||"").trim();
+  if(sourceUrl){
+   let externalId=""; try{const u=new URL(sourceUrl); if(u.hostname==="youtu.be")externalId=u.pathname.split("/").filter(Boolean)[0]||""; else if(u.hostname.includes("youtube.com")){externalId=u.searchParams.get("v")||""; if(!externalId){const p=u.pathname.split("/").filter(Boolean); if(["shorts","embed","live"].includes(p[0]))externalId=p[1]||""}}}catch{}
+   let video:any=null;
+   const existing=await supabase.from("videos").select("id").eq("video_url",sourceUrl).maybeSingle(); if(existing.error)throw new Error(existing.error.message); video=existing.data;
+   if(!video&&externalId){const byId=await supabase.from("videos").select("id").eq("external_id",externalId).maybeSingle(); if(byId.error)throw new Error(byId.error.message); video=byId.data}
+   if(!video){const title=String(payload.title_en||payload.slug||"Short Film"); const thumb=externalId?`https://i.ytimg.com/vi/${externalId}/maxresdefault.jpg`:payload.poster_url||null; const created=await supabase.from("videos").insert({slug:String(payload.slug||externalId||crypto.randomUUID()),title_en:title,title_te:payload.title_te||null,description_en:payload.synopsis_en||null,description_te:payload.synopsis_te||null,platform:externalId?"youtube":"video",external_id:externalId||null,video_url:sourceUrl,thumbnail_url:thumb,status:payload.status||"draft",updated_at:now}).select("id").single(); if(created.error)throw new Error(created.error.message); video=created.data}
+   payload.video_id=video?.id||null; if(!payload.poster_url&&externalId)payload.poster_url=`https://i.ytimg.com/vi/${externalId}/maxresdefault.jpg`;
+  }
+ }
  if(module.slug!=="box-office")payload.updated_at=now;
  if(hasPublishedAt.has(module.slug)&&payload.status==="published")payload.published_at=now;
  let saved:any,error:any;if(id)({data:saved,error}=await supabase.from(module.table).update(payload).eq("id",id).select().single());else({data:saved,error}=await supabase.from(module.table).insert(payload).select().single());if(error)throw new Error(error.message);
