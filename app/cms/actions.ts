@@ -31,3 +31,13 @@ export async function saveMovieRelationships(form:FormData){
  if(links.length){const {error}=await supabase.from("movie_companies").insert(links);if(error)throw new Error(error.message)}
  revalidatePath("/cms/movies/"+movieId);revalidatePath("/cms/movies");redirect("/cms/movies/"+movieId)
 }
+
+
+export async function saveGalleryImages(form:FormData){
+ const {supabase}=await staff();const galleryId=String(form.get("_gallery_id")||"");if(!galleryId)throw new Error("Gallery required");
+ const rows=Number(form.get("_gallery_rows")||0);const images:Record<string,unknown>[]=[];
+ for(let i=0;i<rows;i++){const imageUrl=String(form.get("gallery_image_"+i)||"").trim();if(!imageUrl)continue;images.push({gallery_id:galleryId,image_url:imageUrl,alt_en:empty(form.get("gallery_alt_en_"+i)),alt_te:empty(form.get("gallery_alt_te_"+i)),caption_en:empty(form.get("gallery_caption_en_"+i)),caption_te:empty(form.get("gallery_caption_te_"+i)),credit:empty(form.get("gallery_credit_"+i)),sort_order:form.get("gallery_order_"+i)===""?i:Number(form.get("gallery_order_"+i))})}
+ const {error:removeError}=await supabase.from("gallery_images").delete().eq("gallery_id",galleryId);if(removeError)throw new Error(removeError.message);
+ if(images.length){const {error}=await supabase.from("gallery_images").insert(images);if(error)throw new Error(error.message)}
+ revalidatePath("/cms/galleries/"+galleryId);revalidatePath("/cms/galleries");redirect("/cms/galleries/"+galleryId)
+}
