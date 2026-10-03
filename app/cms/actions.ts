@@ -11,6 +11,7 @@ export async function saveContent(form:FormData){
  const id=String(form.get("_id")||"");const payload:Record<string,unknown>={};
  for(const f of module.fields){const raw=form.get(f.name);if(f.type==="checkbox")payload[f.name]=raw==="on";else if(f.type==="number")payload[f.name]=raw===""||raw===null?null:Number(raw);else payload[f.name]=empty(raw)}
  if(module.slug==="reviews"){const rating=payload.rating as number|null;if(rating!==null&&(rating<0||rating>10))throw new Error("Review rating must be between 0 and 10");if(payload.movie_id&&payload.ott_title_id)throw new Error("Choose either a Movie or an OTT title, not both");}
+ if(module.slug==="box-office"){if(!payload.movie_id)throw new Error("Select a movie");const start=payload.period_start?new Date(String(payload.period_start)):null;const end=payload.period_end?new Date(String(payload.period_end)):null;if(start&&end&&end<start)throw new Error("Period end cannot be before period start");for(const key of ["gross_amount","net_amount","distributor_share"]){const value=payload[key] as number|null;if(value!==null&&value<0)throw new Error("Box Office amounts cannot be negative");}}
  const now=new Date().toISOString();
  let ottVideoId:string|null=null;
  if(module.slug==="ott"){
