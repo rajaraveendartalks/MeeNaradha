@@ -10,6 +10,7 @@ export async function saveContent(form:FormData){
  const {supabase,user}=await staff();const module=getCmsModule(String(form.get("_module")));if(!module)throw new Error("Unknown CMS module");
  const id=String(form.get("_id")||"");const payload:Record<string,unknown>={};
  for(const f of module.fields){const raw=form.get(f.name);if(f.type==="checkbox")payload[f.name]=raw==="on";else if(f.type==="number")payload[f.name]=raw===""||raw===null?null:Number(raw);else payload[f.name]=empty(raw)}
+ if(module.slug==="reviews"){const rating=payload.rating as number|null;if(rating!==null&&(rating<0||rating>10))throw new Error("Review rating must be between 0 and 10");if(payload.movie_id&&payload.ott_title_id)throw new Error("Choose either a Movie or an OTT title, not both");}
  const now=new Date().toISOString();
  let ottVideoId:string|null=null;
  if(module.slug==="ott"){
