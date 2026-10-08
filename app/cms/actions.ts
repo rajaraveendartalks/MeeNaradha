@@ -10,6 +10,7 @@ export async function saveContent(form:FormData){
  const {supabase,user}=await staff();const module=getCmsModule(String(form.get("_module")));if(!module)throw new Error("Unknown CMS module");
  const id=String(form.get("_id")||"");const payload:Record<string,unknown>={};
  for(const f of module.fields){const raw=form.get(f.name);if(f.type==="checkbox")payload[f.name]=raw==="on";else if(f.type==="number")payload[f.name]=raw===""||raw===null?null:Number(raw);else payload[f.name]=empty(raw)}
+ if(module.slug==="polls"){const start=payload.starts_at?new Date(String(payload.starts_at)):null;const end=payload.ends_at?new Date(String(payload.ends_at)):null;if(start&&end&&end<=start)throw new Error("Poll end time must be after the start time");}
  if(module.slug==="reviews"){const rating=payload.rating as number|null;if(rating!==null&&(rating<0||rating>10))throw new Error("Review rating must be between 0 and 10");if(payload.movie_id&&payload.ott_title_id)throw new Error("Choose either a Movie or an OTT title, not both");}
  if(module.slug==="box-office"){if(!payload.movie_id)throw new Error("Select a movie");const rank=payload.rank as number|null;if(rank===null||rank<1||rank>5||!Number.isInteger(rank))throw new Error("Rank must be a whole number from 1 to 5");const weeks=payload.weeks_released as number|null;if(weeks!==null&&(weeks<0||!Number.isInteger(weeks)))throw new Error("Weeks released must be a non-negative whole number");const start=payload.period_start?new Date(String(payload.period_start)):null;const end=payload.period_end?new Date(String(payload.period_end)):null;if(start&&end&&end<start)throw new Error("Period end cannot be before period start");for(const key of ["gross_amount","net_amount"]){const value=payload[key] as number|null;if(value!==null&&value<0)throw new Error("Box Office amounts cannot be negative");}}
  const now=new Date().toISOString();
@@ -66,4 +67,15 @@ export async function saveGalleryImages(form:FormData){
  const {error:removeError}=await supabase.from("gallery_images").delete().eq("gallery_id",galleryId);if(removeError)throw new Error(removeError.message);
  if(images.length){const {error}=await supabase.from("gallery_images").insert(images);if(error)throw new Error(error.message)}
  revalidatePath("/cms/galleries/"+galleryId);revalidatePath("/cms/galleries");redirect("/cms/galleries/"+galleryId)
+}
+
+export async function savePollOptions(form:FormData){
+ const {supabase}=await staff();const pollId=String(form.get("_poll_id")||"");if(!pollId)throw new Error("Poll required");
+ const rows=Number(form.get("_poll_option_rows")||0);const options:Record<string,unknown>[]=[];
+ for(let i=0;i<rows;i++){const labelEn=String(form.get("poll_option_en_"+i)||"").trim();if(!labelEn)continue;options.push({poll_id:pollId,label_en:labelEn,label_te:empty(form.get("poll_option_te_"+i)),sort_order:form.get("poll_option_order_"+i)===""?i:Number(form.get("poll_option_order_"+i))})}
+ if(options.length<2)throw new Error("Add at least two poll options");
+ const existing=await supabase.from("poll_options").select("id").eq("poll_id",pollId);if(existing.error)throw new Error(existing.error.message);
+ const existingIds=(existing.data||[]).map((x:any)=>x.id);if(existingIds.length){const votes=await supabase.from("poll_votes").select("id").in("option_id",existingIds).limit(1);if(votes.error)throw new Error(votes.error.message);if(votes.data?.length)throw new Error("Poll options cannot be replaced after voting has started");}
+ const removed=await supabase.from("poll_options").delete().eq("poll_id",pollId);if(removed.error)throw new Error(removed.error.message);const added=await supabase.from("poll_options").insert(options);if(added.error)throw new Error(added.error.message);
+ revalidatePath("/cms/polls/"+pollId);revalidatePath("/cms/polls");redirect("/cms/polls/"+pollId)
 }
