@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MeeNaradha | తెలుగు Entertainment",
+  title: "MeeNarada | తెలుగు Entertainment",
   description: "Telugu movies, news, OTT, videos and Movie Pulse.",
 };
 
