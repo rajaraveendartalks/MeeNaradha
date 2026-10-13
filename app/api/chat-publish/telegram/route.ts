@@ -20,8 +20,8 @@ export async function POST(req:NextRequest){
  try{
   const body=await req.json();
   const m=body.message;
-  if(m?.chat?.id&&/^\\/start(?:\\s|$)/.test(String(m.text||""))){
-   await sendTelegram("sendMessage",{chat_id:m.chat.id,text:"నమస్కారం! MeeNarada AI Publishing Studio కి స్వాగతం.\\n\\nChoose what you would like to prepare. All content requires editorial approval before publishing.",reply_markup:menu});
+  if(m?.chat?.id && String(m.text || "").trim().split(" ")[0] === "/start"){
+   await sendTelegram("sendMessage",{chat_id:m.chat.id,text:"నమస్కారం! MeeNarada AI Publishing Studio కి స్వాగతం.\n\nChoose what you would like to prepare. All content requires editorial approval before publishing.",reply_markup:menu});
    return NextResponse.json({ok:true});
   }
   const cb=body.callback_query;
