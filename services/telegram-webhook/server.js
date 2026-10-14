@@ -61,7 +61,7 @@ const server=createServer(async(req,res)=>{
     const message = body.message;
     const command = String(message?.text || "").trim().split(" ")[0].split("@")[0];
     if(message?.chat?.id && command === "/start"){
-      await telegram("sendMessage",{chat_id:message.chat.id,text:"నమస్కారం! Mee Narada AI Publishing Studio కి స్వాగతం.\\n\\nChoose what you would like to prepare. All content requires editorial approval before publishing.",reply_markup:menu});
+      await telegram("sendMessage",{chat_id:message.chat.id,text:"నమస్కారం! Mee Narada AI Publishing Studio కి స్వాగతం.\n\nChoose what you would like to prepare. All content requires editorial approval before publishing.",reply_markup:menu});
     } else if(message?.chat?.id && command === "/cancel"){
       await telegram("sendMessage",{chat_id:message.chat.id,text:"Cancelled. Send /start to open the menu."});
     } else if(message?.chat?.id && isNewsReply(message)){
@@ -79,7 +79,7 @@ const server=createServer(async(req,res)=>{
       const chatId = callback.message?.chat?.id;
       if(chatId) {
         if(callback.data === "news") {
-          await telegram("sendMessage",{chat_id:chatId,text:newsMarker+"\\n\\nReply to this message with your Telugu or English news text, including source links.\\n\\nMaximum 10,000 characters. This creates a preview only; it does not save or publish.",reply_markup:{force_reply:true,selective:true,input_field_placeholder:"Paste news text and source links"}});
+          await telegram("sendMessage",{chat_id:chatId,text:newsMarker+"\n\nReply to this message with your Telugu or English news text, including source links.\n\nMaximum 10,000 characters. This creates a preview only; it does not save or publish.",reply_markup:{force_reply:true,selective:true,input_field_placeholder:"Paste news text and source links"}});
         } else if(callback.data === "home") {
           await telegram("sendMessage",{chat_id:chatId,text:"Mee Narada AI Publishing Studio — choose an option:",reply_markup:menu});
         } else {
