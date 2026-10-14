@@ -28,6 +28,22 @@ async function telegram(method, body) {
   });
   if(!r.ok) throw new Error(`Telegram API ${r.status}`);
 }
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const allowedEditors = new Set((process.env.TELEGRAM_ALLOWED_USER_IDS || "").split(",").map(x=>x.trim()).filter(Boolean));
+function editorAllowed(id) { return id != null && allowedEditors.has(String(id)); }
+async function saveIntake(updateId,message,text) {
+  if (!supabaseUrl || !supabaseKey) throw new Error("Draft storage not configured");
+  const urls = [...new Set(text.match(/https?:\/\/[^\s<>]+/g) || [])];
+  const response = await fetch(supabaseUrl.replace(/\/$/,"")+"/rest/v1/telegram_news_intake?on_conflict=telegram_update_id",{
+    method:"POST",
+    headers:{"apikey":supabaseKey,"authorization":"Bearer "+supabaseKey,"content-type":"application/json","prefer":"resolution=ignore-duplicates,return=representation"},
+    body:JSON.stringify({telegram_update_id:updateId,telegram_user_id:message.from.id,telegram_chat_id:message.chat.id,source_message_id:message.message_id,raw_text:text,source_urls:urls})
+  });
+  if(!response.ok) throw new Error("Draft storage HTTP "+response.status);
+  const rows=await response.json();
+  return {created:rows.length>0,id:rows[0]?.id||null};
+}
 const newsMarker = "📰 Mee Narada News Intake";
 const maxNewsLength = 10000;
 function isNewsReply(message) {
@@ -70,8 +86,13 @@ const server=createServer(async(req,res)=>{
         await telegram("sendMessage",{chat_id:message.chat.id,text:"Please send your news as text. Media uploads will be supported in a later stage."});
       } else if(text.length > maxNewsLength) {
         await telegram("sendMessage",{chat_id:message.chat.id,text:"News text is too long. Please keep it within 10,000 characters."});
+      } else if(!editorAllowed(message.from?.id)) {
+        await telegram("sendMessage",{chat_id:message.chat.id,text:"⛔ Draft saving is restricted to authorized Mee Narada editors. Ask an admin to register your Telegram numeric user ID."});
       } else {
-        await telegram("sendMessage",{chat_id:message.chat.id,text:previewNews(text),reply_markup:{inline_keyboard:[[{text:"📰 Create Another Draft",callback_data:"news"}],[{text:"🏠 Main Menu",callback_data:"home"}]]}});
+        const stored = await saveIntake(body.update_id,message,text);
+        if(stored.created) {
+          await telegram("sendMessage",{chat_id:message.chat.id,text:previewNews(text)+"\n\n✅ Saved securely as a private editorial draft. Draft ID: "+stored.id,reply_markup:{inline_keyboard:[[{text:"📰 Create Another Draft",callback_data:"news"}],[{text:"🏠 Main Menu",callback_data:"home"}]]}});
+        }
       }
     } else if(body.callback_query?.id){
       const callback = body.callback_query;
@@ -79,7 +100,8 @@ const server=createServer(async(req,res)=>{
       const chatId = callback.message?.chat?.id;
       if(chatId) {
         if(callback.data === "news") {
-          await telegram("sendMessage",{chat_id:chatId,text:newsMarker+"\n\nReply to this message with your Telugu or English news text, including source links.\n\nMaximum 10,000 characters. This creates a preview only; it does not save or publish.",reply_markup:{force_reply:true,selective:true,input_field_placeholder:"Paste news text and source links"}});
+          if(!editorAllowed(callback.from?.id)) { await telegram("sendMessage",{chat_id:chatId,text:"⛔ Create News is restricted to authorized Mee Narada editors."}); return reply(res,200,{ok:true}); }
+          await telegram("sendMessage",{chat_id:chatId,text:newsMarker+"\n\nReply to this message with your Telugu or English news text, including source links.\n\nMaximum 10,000 characters. Your submission is saved privately for editorial review; it is not published.",reply_markup:{force_reply:true,selective:true,input_field_placeholder:"Paste news text and source links"}});
         } else if(callback.data === "home") {
           await telegram("sendMessage",{chat_id:chatId,text:"Mee Narada AI Publishing Studio — choose an option:",reply_markup:menu});
         } else {
