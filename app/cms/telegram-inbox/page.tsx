@@ -1,6 +1,6 @@
 import { requireCmsAccess } from "../../../lib/cms-auth";
 import { createClient } from "@supabase/supabase-js";
-import { reviewTelegramDraft } from "./actions";
+import { markTelegramDraftInReview, rejectTelegramDraft } from "./actions";
 
 export const dynamic="force-dynamic";
 type Intake={id:string;telegram_user_id:number;raw_text:string;source_urls:string[]|null;status:string;created_at:string;updated_at:string};
@@ -23,11 +23,11 @@ export default async function TelegramInbox({searchParams}:{searchParams:Promise
  <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere",margin:"14px 0"}}>{row.raw_text}</p>
  <div><b>Sources:</b> {(row.source_urls||[]).length===0?"None provided":(row.source_urls||[]).map((source,i)=>{try{const parsed=new URL(source);if(!["https:","http:"].includes(parsed.protocol))return null;return <a key={i} href={parsed.href} target="_blank" rel="noopener noreferrer" style={{display:"block",overflowWrap:"anywhere"}}>{parsed.href}</a>}catch{return null}})}</div>
  <small>Draft ID: {row.id} · Status: {row.status}</small>
- {["draft","in_review"].includes(row.status)&&<form action={reviewTelegramDraft} style={{display:"grid",gap:12,marginTop:16}}>
+ {["draft","in_review"].includes(row.status)&&<form action={markTelegramDraftInReview} style={{display:"grid",gap:12,marginTop:16}}>
  <input type="hidden" name="id" value={row.id}/>
  <label htmlFor={"text-"+row.id}>Edit news text before review</label>
  <textarea id={"text-"+row.id} name="raw_text" defaultValue={row.raw_text} maxLength={10000} required rows={5} style={{width:"100%",padding:12,borderRadius:8}}/>
- <div style={{display:"flex",gap:12,flexWrap:"wrap"}}><button className="cmsButton" type="submit" name="decision" value="in_review">Save & mark in review</button><button className="cmsButton" type="submit" name="decision" value="rejected">Reject draft</button></div>
+ <div style={{display:"flex",gap:12,flexWrap:"wrap"}}><button className="cmsButton" type="submit">Save & mark in review</button><button className="cmsButton" type="submit" formAction={rejectTelegramDraft}>Reject draft</button></div>
  </form>}
  </article>)}</div>
  {!error&&rows.length===0&&<p>No Telegram submissions in this status.</p>}
