@@ -9,13 +9,11 @@ function adminDb() {
  if(!url||!key) throw new Error("Telegram inbox backend is not configured.");
  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 }
-export async function reviewTelegramDraft(formData:FormData) {
+async function reviewTelegramDraft(formData:FormData, decision:"in_review"|"rejected") {
  const {user}=await requireCmsAccess();
  const id=String(formData.get("id")||"");
- const decision=String(formData.get("decision")||"");
  const text=String(formData.get("raw_text")||"").trim();
  if(!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("Invalid draft ID");
- if(!["in_review","rejected"].includes(decision)) throw new Error("Invalid review action");
  if(text.length<1||text.length>10000) throw new Error("News text must be 1–10,000 characters");
  const db=adminDb();
  const {data:existing,error:readError}=await db.from("telegram_news_intake").select("id,status").eq("id",id).single();
@@ -25,4 +23,11 @@ export async function reviewTelegramDraft(formData:FormData) {
  if(error) throw new Error("Unable to update draft");
  console.info("Telegram inbox review", {id,decision,editor:user.id});
  revalidatePath("/cms/telegram-inbox");
+}
+
+export async function markTelegramDraftInReview(formData:FormData) {
+ return reviewTelegramDraft(formData,"in_review");
+}
+export async function rejectTelegramDraft(formData:FormData) {
+ return reviewTelegramDraft(formData,"rejected");
 }
