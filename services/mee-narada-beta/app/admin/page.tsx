@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {db,configured,titleOf,Article,Gallery} from "@/lib/db";
+import {db,configured,titleOf,Article,Gallery} from "../../lib/db";
 type Kind="articles"|"galleries";
 const empty={id:"",slug:"",headline_te:"",headline_en:"",body_te:"",body_en:"",dek_te:"",hero_image_url:"",category:"movies",title_te:"",title_en:"",description_te:"",cover_image_url:"",status:"draft"};
 function slugify(s:string){return s.trim().toLowerCase().replace(/[^a-z0-9\u0c00-\u0c7f]+/g,"-").replace(/^-|-$/g,"").slice(0,90)||"story-"+Date.now()}
