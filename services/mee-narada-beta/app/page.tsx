@@ -10,7 +10,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{section
  const galleries=(galleryResult.data||[]) as Gallery[];
  const selected=categories.some(c=>c.key===section)?section:"latest";
  const filtered=news.filter(a=>selected==="latest"||selected==="galleries"?selected==="latest":selected==="movies"?(a.category||"").toLowerCase().includes("movie"):(a.category||"").toLowerCase().includes(selected));
- const lead=filtered[0],side=filtered.slice(1,3),rest=filtered.slice(3);
+ const lead=filtered[0],side=filtered.slice(1,5),rest=filtered.slice(5);
  const galleryMode=selected==="galleries";
  return <><header className="top"><div className="wrap topin"><Link href="/" className="logo" aria-label="Mee Narada home">Mee <b>Narada</b><span className="beta-mark">BETA</span></Link><nav className="desktop-nav" aria-label="Main navigation"><Link href="/">హోమ్</Link><Link href="/?section=movies">సినిమాలు</Link><Link href="/?section=ott">OTT</Link><Link href="/?section=galleries">ఫోటోలు</Link></nav><Link className="editor-link" href="/admin">Editor Login</Link></div></header>
  <div className="ticker"><div className="wrap ticker-inner"><strong>తాజా అప్‌డేట్స్</strong><span>తెలుగు సినిమా • OTT • సెలబ్రిటీలు • వినోద వార్తలు</span></div></div>
