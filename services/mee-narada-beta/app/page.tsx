@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {db,configured,titleOf,Article,Gallery} from "@/lib/db";
+import {db,configured,titleOf,Article,Gallery} from "../lib/db";
 export const dynamic="force-dynamic";
 export default async function Home({searchParams}:{searchParams:Promise<{section?:string}>}){
  const {section="latest"}=await searchParams;
