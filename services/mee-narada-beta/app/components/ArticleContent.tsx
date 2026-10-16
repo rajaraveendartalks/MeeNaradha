@@ -2,7 +2,7 @@ import React from "react";
 
 /** Restricted editorial markup: never interpret author input as HTML. */
 function inline(text:string):React.ReactNode[]{
- const pattern=/(\*\*[^*\n]+\*\*|__[^_\n]+__|\[color:(red|blue|green|orange|purple)\][\s\S]*?\[\/color\]|\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/g;
+ const pattern=/(\*\*[^*\n]+\*\*|__[^_\n]+__|\[color:(?:red|blue|green|orange|purple)\][\s\S]*?\[\/color\]|\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/g;
  return text.split(pattern).filter(Boolean).map((part,i)=>{
   if(part.startsWith("**")&&part.endsWith("**"))return <strong key={i}>{part.slice(2,-2)}</strong>;
   if(part.startsWith("__")&&part.endsWith("__"))return <u key={i}>{part.slice(2,-2)}</u>;
