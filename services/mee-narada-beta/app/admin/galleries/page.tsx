@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {db} from "../../lib/db";
+import {db} from "../../../lib/db";
 type Gallery={id:string;slug:string;title_te:string|null;title_en:string|null;description_te:string|null;cover_image_url:string|null;category:string|null;status:string};
 type Photo={id:string;image_url:string;caption_te:string|null;alt_te:string|null;sort_order:number};
 const categories=[["movie_posters","Movie Posters"],["actors","Actors"],["actresses","Actresses"],["influencers","Influencers"]] as const;
