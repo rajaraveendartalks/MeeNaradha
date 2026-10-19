@@ -1,8 +1,12 @@
+import type {Metadata} from "next";
 import Link from "next/link";
 import {db,titleOf,Gallery} from "../../lib/db";
 export const dynamic="force-dynamic";
 const filters=[{key:"all",name:"All Galleries",te:"అన్ని ఫోటోలు"},{key:"movie_posters",name:"Movie Posters",te:"సినిమా పోస్టర్లు"},{key:"actors",name:"Actors",te:"నటులు"},{key:"actresses",name:"Actresses",te:"నటీమణులు"},{key:"influencers",name:"Influencers",te:"ఇన్‌ఫ్లుయెన్సర్లు"}];
 type ListedGallery=Gallery&{category?:string|null};
+export async function generateMetadata({searchParams}:{searchParams:Promise<{category?:string}>}):Promise<Metadata>{
+ const {category="all"}=await searchParams;const selected=filters.find(f=>f.key===category)||filters[0];const title=selected.key==="all"?"Photo Galleries | Mee Narada":selected.name+" Photo Galleries | Mee Narada";const description="Explore Telugu movie posters, actors, actresses and influencer photo galleries on Mee Narada.";const url="https://www.meenarada.com/gallery"+(selected.key==="all"?"":"?category="+selected.key);return {title,description,alternates:{canonical:url},openGraph:{type:"website",title,description,url,siteName:"Mee Narada"},twitter:{card:"summary",title,description}};
+}
 export default async function GalleryHome({searchParams}:{searchParams:Promise<{category?:string}>}){
  const {category="all"}=await searchParams;
  const selected=filters.some(f=>f.key===category)?category:"all";
