@@ -11,8 +11,9 @@ const demoCategories=[
  {key:"technology",label:"టెక్నాలజీ & VFX",match:(s:string)=>/tech|vfx/i.test(s),stories:[["సినిమాల్లో VFX మేకింగ్","VFX ఫీచర్ నమూనా"],["AIతో సినిమా నిర్మాణం","AI సినిమా కథన నమూనా"],["వర్చువల్ ప్రొడక్షన్ టెక్నాలజీ","టెక్నాలజీ కథన నమూనా"]]},
  {key:"politics",label:"రాజకీయాలు",match:(s:string)=>/politic/i.test(s),stories:[["రాజకీయ ఇంటర్వ్యూ ముఖ్యాంశాలు","రాజకీయ వార్త నమూనా"],["ప్రజా సమస్యలపై చర్చ","ప్రజా చర్చ కథన నమూనా"],["అసెంబ్లీ సమావేశాల విశ్లేషణ","రాజకీయ విశ్లేషణ నమూనా"]]}
 ];
+const demoImages:Record<string,string>={movies:"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&q=80",ott:"https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=900&q=80",celebrities:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&q=80","box-office":"https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=900&q=80",technology:"https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=900&q=80",politics:"https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=900&q=80"};
 function demoCard(category:string,title:string,subtitle:string,index:number){
- return <div className="news-card demo-news-card" key={category+"-"+index}><div className="news-image demo-image"><span className="demo-tag">DEMO</span><div className="demo-image-label">Mee Narada<br/>{category.toUpperCase()}</div></div><div className="news-copy"><span className="category-label">{category}</span><h2>{title}</h2><p>{subtitle} · ఇది డిజైన్ కోసం మాత్రమే.</p></div></div>
+ return <div className="news-card demo-news-card" key={category+"-"+index}><div className="news-image demo-image"><img src={demoImages[category]} alt={category+" sample illustration"} loading="lazy"/><span className="demo-tag">DEMO</span></div><div className="news-copy"><span className="category-label">{category}</span><h2>{title}</h2><p>{subtitle} · ఇది డిజైన్ కోసం మాత్రమే.</p></div></div>
 }
 export default async function Home({searchParams}:{searchParams:Promise<{section?:string}>}){
  const {section="latest"}=await searchParams;
