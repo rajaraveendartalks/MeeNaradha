@@ -12,7 +12,8 @@ export default async function Home({searchParams}:{searchParams:Promise<{section
  const filtered=news.filter(a=>selected==="latest"||selected==="galleries"?selected==="latest":selected==="movies"?(a.category||"").toLowerCase().includes("movie"):(a.category||"").toLowerCase().includes(selected));
  const lead=filtered[0],side=filtered.slice(1,5),rest=filtered.slice(5);
  const galleryMode=selected==="galleries";
- const homepageCategories=["movies","ott","celebrities","box-office","technology"];\n const categoryGroups=Array.from(new Set(rest.map(a=>(a.category||"General").trim()||"General"))).filter(name=>homepageCategories.some(key=>{const normalized=name.toLowerCase().replace(/[_\\s]+/g,"-");return key==="movies"?normalized.includes("movie")||normalized.includes("cinema"):key==="technology"?normalized.includes("tech")||normalized.includes("vfx"):normalized.includes(key)})).slice(0,5).map(name=>({
+ const homepageCategories=["movies","ott","celebrities","box-office","technology"];
+ const categoryGroups=Array.from(new Set(rest.map(a=>(a.category||"General").trim()||"General"))).filter(name=>homepageCategories.some(key=>{const normalized=name.toLowerCase().replace(/[_\\s]+/g,"-");return key==="movies"?normalized.includes("movie")||normalized.includes("cinema"):key==="technology"?normalized.includes("tech")||normalized.includes("vfx"):normalized.includes(key)})).slice(0,5).map(name=>({
   name,
   items:rest.filter(a=>((a.category||"General").trim()||"General")===name).slice(0,3),
   total:rest.filter(a=>((a.category||"General").trim()||"General")===name).length
