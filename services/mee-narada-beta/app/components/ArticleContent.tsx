@@ -2,9 +2,10 @@ import React from "react";
 
 /** Restricted editorial markup: never interpret author input as HTML. */
 function inline(text:string):React.ReactNode[]{
- const pattern=/(\*\*[^*\n]+\*\*|__[^_\n]+__|\[color:(?:red|blue|green|orange|purple)\][\s\S]*?\[\/color\]|\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/g;
+ const pattern=/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|__[^_\n]+__|\[color:(?:red|blue|green|orange|purple)\][\s\S]*?\[\/color\]|\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/g;
  return text.split(pattern).filter(Boolean).map((part,i)=>{
   if(part.startsWith("**")&&part.endsWith("**"))return <strong key={i}>{part.slice(2,-2)}</strong>;
+  if(part.startsWith("*")&&part.endsWith("*")&&!part.startsWith("**"))return <em key={i}>{part.slice(1,-1)}</em>;
   if(part.startsWith("__")&&part.endsWith("__"))return <u key={i}>{part.slice(2,-2)}</u>;
   const color=part.match(/^\[color:(red|blue|green|orange|purple)\]([\s\S]*)\[\/color\]$/);
   if(color)return <span key={i} style={{color:({red:"#cf233d",blue:"#2164c4",green:"#18794e",orange:"#ba6100",purple:"#793cb5"} as Record<string,string>)[color[1]]}}>{color[2]}</span>;
@@ -20,6 +21,8 @@ export function ArticleContent({value}:{value:string}){
   const t=block.trim();if(!t)return null;
   const video=t.match(/^\[youtube\]\s*(https?:\/\/\S+)\s*\[\/youtube\]$/i);
   if(video){const id=youtubeId(video[1]);return id?<div className="video-embed" key={i}><iframe src={"https://www.youtube-nocookie.com/embed/"+id} title="YouTube video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/></div>:<p key={i}>Invalid YouTube URL</p>}
+  const image=t.match(/^!\[([^\]\n]*)\]\((https:\/\/[^\s)]+)\)$/);
+  if(image){try{const url=new URL(image[2]);if(url.protocol==="https:")return <figure key={i}><img src={url.href} alt={image[1]||"Article image"} loading="lazy" style={{maxWidth:"100%",height:"auto",borderRadius:8}}/>{image[1]&&<figcaption>{image[1]}</figcaption>}</figure>}catch{}}
   if(t.startsWith("### "))return <h3 key={i}>{inline(t.slice(4))}</h3>;
   if(t.startsWith("## "))return <h2 key={i}>{inline(t.slice(3))}</h2>;
   const lines=t.split("\n");
