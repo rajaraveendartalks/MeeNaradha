@@ -1,0 +1,10 @@
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {db} from "../../../lib/db";
+export default function AcceptInvite(){
+ const [ready,setReady]=useState(false),[password,setPassword]=useState(""),[confirm,setConfirm]=useState(""),[message,setMessage]=useState(""),[saving,setSaving]=useState(false);
+ useEffect(()=>{(async()=>{if(!db){setMessage("Supabase is not configured.");return}const {data:{session}}=await db.auth.getSession();if(session){setReady(true);return}const hash=new URLSearchParams(window.location.hash.slice(1));if(hash.get("error")){setMessage(hash.get("error_description")||"Invitation expired.");return}setMessage("Open your most recent invitation link. If it has expired, request a new invitation.")})()},[]);
+ async function submit(e:React.FormEvent){e.preventDefault();if(!db)return;if(password.length<12){setMessage("Choose a password of at least 12 characters.");return}if(password!==confirm){setMessage("Passwords do not match.");return}setSaving(true);const {error}=await db.auth.updateUser({password});setSaving(false);if(error){setMessage(error.message);return}setPassword("");setConfirm("");setMessage("Password saved. You can now sign in to the CMS.");}
+ return <><header className="top"><div className="wrap topin"><Link href="/" className="logo">Mee <b>Narada</b></Link></div></header><main className="admin"><h1>Accept your team invitation</h1><section className="panel"><p>Set a secure password for your Mee Narada account.</p>{message&&<p className="notice" role="status">{message}</p>}{ready&&<form onSubmit={submit}><label className="field"><strong>New password</strong><input type="password" minLength={12} autoComplete="new-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label><label className="field"><strong>Confirm password</strong><input type="password" minLength={12} autoComplete="new-password" required value={confirm} onChange={e=>setConfirm(e.target.value)}/></label><button className="btn" disabled={saving}>{saving?"Saving…":"Set password"}</button></form>}<p><Link href="/admin">Go to CMS login →</Link></p></section></main></>;
+}
