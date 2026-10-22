@@ -1,9 +1,9 @@
 import { requireCmsAccess } from "../../../lib/cms-auth";
 import { createClient } from "@supabase/supabase-js";
-import { markTelegramDraftInReview, rejectTelegramDraft } from "./actions";
+import { markTelegramDraftInReview, rejectTelegramDraft, transferTelegramDraftToNews } from "./actions";
 
 export const dynamic="force-dynamic";
-type Intake={id:string;telegram_user_id:number;raw_text:string;source_urls:string[]|null;status:string;created_at:string;updated_at:string};
+type Intake={id:string;telegram_user_id:number;raw_text:string;source_urls:string[]|null;status:string;cms_article_id:string|null;created_at:string;updated_at:string};
 export default async function TelegramInbox({searchParams}:{searchParams:Promise<{status?:string}>}) {
  await requireCmsAccess();
  const {status="draft"}=await searchParams;
@@ -13,7 +13,7 @@ export default async function TelegramInbox({searchParams}:{searchParams:Promise
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key) return <div className="cmsError">Telegram Inbox requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the Mee Narada CMS deployment. Do not expose the service role key to the browser.</div>;
  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
- const {data,error}=await db.from("telegram_news_intake").select("id,telegram_user_id,raw_text,source_urls,status,created_at,updated_at").eq("status",filter).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await db.from("telegram_news_intake").select("id,telegram_user_id,raw_text,source_urls,status,cms_article_id,created_at,updated_at").eq("status",filter).order("created_at",{ascending:false}).limit(100);
  const rows=(data||[]) as Intake[];
  return <><header className="cmsHead"><div><p>TELEGRAM · EDITORIAL</p><h1>Telegram News Inbox</h1><span>Private submissions · Review before CMS publishing</span></div></header>
  <nav style={{display:"flex",gap:12,flexWrap:"wrap",margin:"20px 0"}}>{allowed.map(s=><a key={s} href={"/cms/telegram-inbox?status="+s} className="cmsButton" style={{opacity:filter===s?1:0.65}}>{s.replace("_"," ")}</a>)}</nav>
@@ -29,6 +29,8 @@ export default async function TelegramInbox({searchParams}:{searchParams:Promise
  <textarea id={"text-"+row.id} name="raw_text" defaultValue={row.raw_text} maxLength={10000} required rows={5} style={{width:"100%",padding:12,borderRadius:8}}/>
  <div style={{display:"flex",gap:12,flexWrap:"wrap"}}><button className="cmsButton" type="submit">Save & mark in review</button><button className="cmsButton" type="submit" formAction={rejectTelegramDraft}>Reject draft</button></div>
  </form>}
+ {row.status==="in_review"&&<form action={transferTelegramDraftToNews} style={{marginTop:12}}><input type="hidden" name="id" value={row.id}/><button type="submit" className="cmsButton">Transfer to News CMS (unpublished draft)</button></form>}
+ {row.status==="transferred"&&row.cms_article_id&&<p><a href={"/cms/news/"+row.cms_article_id}>Open linked News CMS draft →</a></p>}
  </article>)}</div>
  {!error&&rows.length===0&&<p>No Telegram submissions in this status.</p>}
  <p style={{marginTop:24}}>Review actions do not publish news or create public articles. Only authorized CMS editors and admins can access this page.</p>

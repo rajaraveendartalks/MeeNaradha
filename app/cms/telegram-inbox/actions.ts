@@ -31,3 +31,18 @@ export async function markTelegramDraftInReview(formData:FormData) {
 export async function rejectTelegramDraft(formData:FormData) {
  return reviewTelegramDraft(formData,"rejected");
 }
+
+/** Transfer a reviewed Telegram item into an unpublished CMS news draft. */
+export async function transferTelegramDraftToNews(formData:FormData) {
+ const {user}=await requireCmsAccess();
+ const id=String(formData.get("id")||"");
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new Error("Invalid submission ID");
+ const db=adminDb();
+ const {data:articleId,error}=await db.rpc("transfer_telegram_news_to_cms",{p_intake_id:id});
+ if(error||!articleId) throw new Error(error?.message||"Unable to transfer news draft");
+ console.info("Telegram draft transferred to unpublished News CMS", {intakeId:id,articleId,editor:user.id});
+ revalidatePath("/cms/telegram-inbox");
+ revalidatePath("/cms/news");
+ const {redirect}=await import("next/navigation");
+ redirect("/cms/news/"+articleId);
+}
