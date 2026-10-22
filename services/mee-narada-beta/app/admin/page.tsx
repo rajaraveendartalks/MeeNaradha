@@ -13,8 +13,8 @@ export default function Admin(){
  const [recovery,setRecovery]=useState<Record<string,string>|null>(null);
  const [draftState,setDraftState]=useState("Not saved locally");
  const draftTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
- const draftKey=editorUserId?`mee-narada-v2:${editorUserId}:${kind}`:"";
  const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[logged,setLogged]=useState(false),[authorized,setAuthorized]=useState(false),[loading,setLoading]=useState(true),[kind,setKind]=useState<Kind>("articles"),[items,setItems]=useState<any[]>([]),[form,setForm]=useState<Record<string,string>>({...empty}),[message,setMessage]=useState(""),[saving,setSaving]=useState(false),[imageFile,setImageFile]=useState<File|null>(null);
+ const draftKey=editorUserId?`mee-narada-v2:${editorUserId}:${kind}`:"";
  async function check(){if(!db){setLoading(false);return}const {data:{user}}=await db.auth.getUser();setLogged(Boolean(user));setEditorUserId(user?.id||"");if(user){const {data,error}=await db.from("user_roles").select("role").eq("user_id",user.id).in("role",["editor","admin"]).maybeSingle();setAuthorized(Boolean(data&&!error))}else setAuthorized(false);setLoading(false)}
  useEffect(()=>{void check()},[]);
  async function load(k:Kind){if(!db)return;const {data,error}=await db.from(k==="articles"?"news_articles":"image_galleries").select("*").order("created_at",{ascending:false}).limit(100);setItems(data||[]);if(error)setMessage(error.message)}
