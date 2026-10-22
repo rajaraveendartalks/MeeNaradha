@@ -15,6 +15,7 @@ export default function Admin(){
  const [imagePreview,setImagePreview]=useState("");
  const [recovery,setRecovery]=useState<Record<string,string>|null>(null);
  const [draftState,setDraftState]=useState("Not saved locally");
+ const [draftReady,setDraftReady]=useState(false);
  const draftTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[logged,setLogged]=useState(false),[authorized,setAuthorized]=useState(false),[loading,setLoading]=useState(true),[kind,setKind]=useState<Kind>("articles"),[items,setItems]=useState<any[]>([]),[form,setForm]=useState<Record<string,string>>({...empty}),[message,setMessage]=useState(""),[saving,setSaving]=useState(false),[imageFile,setImageFile]=useState<File|null>(null);
  const draftKey=editorUserId?`mee-narada-v2:${editorUserId}:${kind}`:"";
@@ -22,8 +23,8 @@ export default function Admin(){
  useEffect(()=>{void check()},[]);
  async function load(k:Kind){if(!db)return;const {data,error}=await db.from(k==="articles"?"news_articles":"image_galleries").select("*").order("created_at",{ascending:false}).limit(100);setItems(data||[]);if(error)setMessage(error.message)}
  useEffect(()=>{if(authorized)void load(kind)},[authorized,kind]);
- useEffect(()=>{if(!authorized||!draftKey)return;try{const raw=localStorage.getItem(draftKey);setRecovery(raw?JSON.parse(raw) as Record<string,string>:null)}catch{setRecovery(null)}setDraftState("Not saved locally");return()=>{if(draftTimer.current)clearTimeout(draftTimer.current)}},[authorized,draftKey]);
- useEffect(()=>{if(!authorized||!draftKey)return;if(draftTimer.current)clearTimeout(draftTimer.current);setDraftState("Unsaved changes");draftTimer.current=setTimeout(()=>{try{localStorage.setItem(draftKey,JSON.stringify(form));setRecovery({...form});setDraftState("Saved locally on this device")}catch{setDraftState("Local autosave unavailable")}},1000);return()=>{if(draftTimer.current)clearTimeout(draftTimer.current)}},[form,authorized,draftKey]);
+ useEffect(()=>{if(!authorized||!draftKey)return;setDraftReady(false);try{const raw=localStorage.getItem(draftKey);setRecovery(raw?JSON.parse(raw) as Record<string,string>:null)}catch{setRecovery(null)}setDraftState("Not saved locally");setDraftReady(true);return()=>{if(draftTimer.current)clearTimeout(draftTimer.current)}},[authorized,draftKey]);
+ useEffect(()=>{if(!authorized||!draftKey||!draftReady)return;if(draftTimer.current)clearTimeout(draftTimer.current);setDraftState("Unsaved changes");draftTimer.current=setTimeout(()=>{try{localStorage.setItem(draftKey,JSON.stringify(form));setRecovery({...form});setDraftState("Saved locally on this device")}catch{setDraftState("Local autosave unavailable")}},1000);return()=>{if(draftTimer.current)clearTimeout(draftTimer.current)}},[form,authorized,draftKey,draftReady]);
  async function login(e:React.FormEvent){e.preventDefault();if(!db)return;setLoading(true);const {error}=await db.auth.signInWithPassword({email,password});setPassword("");setMessage(error?.message||"");await check()}
  async function logout(){await db?.auth.signOut();setLogged(false);setAuthorized(false);setEditorUserId("");setEditorRole("");setRecovery(null);setItems([])}
  function edit(item:any){setForm({...empty,...Object.fromEntries(Object.entries(item).map(([k,v])=>[k,v==null?"":String(v)])),scheduled_at:item.scheduled_at?toLocalDateTime(item.scheduled_at):""});window.scrollTo({top:0,behavior:"smooth"})}
