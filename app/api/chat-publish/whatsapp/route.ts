@@ -1,0 +1,6 @@
+import {NextRequest,NextResponse} from "next/server";
+import {createHmac,timingSafeEqual} from "node:crypto";
+import {normalizeWhatsApp} from "../../../../lib/chat-publish/types";
+import {ingestMessages} from "../../../../lib/chat-publish/ingest";
+export async function GET(req:NextRequest){const u=req.nextUrl.searchParams;const token=process.env.WHATSAPP_VERIFY_TOKEN;if(token&&u.get("hub.mode")==="subscribe"&&u.get("hub.verify_token")===token)return new Response(u.get("hub.challenge")||"",{status:200});return new Response("Forbidden",{status:403})}
+export async function POST(req:NextRequest){const secret=process.env.META_APP_SECRET;if(!secret)return NextResponse.json({error:"Not configured"},{status:503});const body=await req.text();const signature=req.headers.get("x-hub-signature-256")||"";const expected="sha256="+createHmac("sha256",secret).update(body).digest("hex");const a=Buffer.from(signature),b=Buffer.from(expected);if(a.length!==b.length||!timingSafeEqual(a,b))return NextResponse.json({error:"Unauthorized"},{status:401});try{await ingestMessages(normalizeWhatsApp(JSON.parse(body)));return NextResponse.json({ok:true})}catch(e){console.error("WhatsApp ingestion failed",e);return NextResponse.json({error:"Ingestion failed"},{status:500})}}
