@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {db} from "../../../lib/db";
+import {db} from "../../lib/db";
 type Submission={id:string;content_type:string;title_en:string;title_te:string|null;status:string;reviewer_feedback:string|null;video_url:string|null;description_en:string|null;movie_title:string|null;production_company:string|null};
 const types=[["short_film","Short Film"],["trailer","Movie Trailer"],["song","Song"],["reel","Short Reel"],["movie_profile","Movie Profile"]];
 const blank={content_type:"short_film",title_en:"",title_te:"",description_en:"",video_url:"",movie_title:"",production_company:""};
