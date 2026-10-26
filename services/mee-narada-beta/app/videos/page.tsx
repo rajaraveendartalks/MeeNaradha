@@ -1,0 +1,4 @@
+import Link from "next/link";
+import {db} from "../../lib/db";
+export const dynamic="force-dynamic";
+export default async function Videos(){const {data}=db?await db.from("videos").select("id,slug,title_en,title_te,thumbnail_url,content_type").eq("status","published").order("published_at",{ascending:false}).limit(100):{data:[]};return <main style={{maxWidth:1050,margin:"40px auto",padding:20,fontFamily:"Arial,sans-serif"}}><Link href="/">← Mee Narada</Link><h1>Videos · వీడియోలు</h1><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:20}}>{(data||[]).map(v=><Link href={"/videos/"+v.slug} key={v.id} style={{color:"inherit",textDecoration:"none"}}>{v.thumbnail_url&&<img src={v.thumbnail_url} alt="" style={{width:"100%",borderRadius:10}}/>}<h2>{v.title_te||v.title_en}</h2><p>{v.content_type||"Video"}</p></Link>)}</div></main>}
