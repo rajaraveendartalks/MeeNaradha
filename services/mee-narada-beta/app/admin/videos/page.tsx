@@ -19,6 +19,7 @@ export default function VideoPublisher(){
   try{
    if(!db)throw new Error("Video service is not configured.");
    const {data:{user},error:authError}=await db.auth.getUser();
+   if(!user&&(!authError||authError.name==="AuthSessionMissingError"))throw new Error("Please sign in through the Administrator dashboard first.");
    if(authError)throw authError;
    if(!user)throw new Error("Please sign in through the Administrator dashboard first.");
    setAccount(user.email||"Signed-in user");
@@ -42,7 +43,10 @@ export default function VideoPublisher(){
    const {data,error}=await db.rpc("publish_creator_video",{p_submission_id:id});
    if(error)throw error;
    if(!data)throw new Error("No publication confirmation was returned. Refresh the status before retrying.");
-   setMessage("Video published successfully.");await load();
+   setMessage("Video published successfully.");
+   const {data:video,error:refreshError}=await db.from("videos").select("id,slug,creator_submission_id,status").eq("id",data).single();
+   if(refreshError){setError("The video was published, but its status could not be refreshed. Use Refresh status before retrying.");return}
+   setPublished(previous=>[...previous.filter(item=>item.id!==video.id),video]);
   }catch(e){setError("Publishing failed: "+errorText(e))}finally{setBusy("")}
  }
  return <main style={{maxWidth:900,margin:"40px auto",padding:20,fontFamily:"Arial,sans-serif"}}>

@@ -20,24 +20,27 @@ Checks:
 - Administrator publication succeeds and repeat publication returns the same ID.
 - Approved submission edits remain blocked for administrator and creator.
 
-## Deployment gate
+## Staging and release gate
 
-As verified on 2026-10-26, both meenarada.com/admin and the Creator Studio staging
-site embed the endpoint sfykcmbgsuzlyksosjny.supabase.co. Do not apply this migration
-to that shared database under staging-only authorization.
+As verified on 2026-10-27, Creator Studio staging uses the isolated test project
+`pbusxvpvaackkudgttfd`. Its deployed URL and public key successfully read published
+videos, and a published video detail returns HTTP 200 with the YouTube embed.
+The production project remains `sfykcmbgsuzlyksosjny` and has not received this fix.
 
-Supabase rejected branch creation because branching requires Pro or above.
-No database schema, data, roles or policies were changed remotely.
+Live Auth/Data API tests passed using synthetic users: creator draft/submission,
+reviewer approval, admin publishing, repeat publication, anonymous reads and denied
+operations. No production user accounts or content were copied.
 
-Before release:
-1. Provision an isolated test project or development branch.
-2. Reconcile and restore the full current schema: repository migrations alone do
-   not yet include all live Creator Studio foundation changes.
-3. Apply the migration there and seed synthetic users/submissions.
-4. Point a dedicated Vercel preview at that isolated database.
-5. Test creator submission, reviewer approval, admin publishing, duplicate clicks,
-   logged-out listing and detail pages, and denied operations in a browser.
-6. Review deployment and database changes together before any production release.
+The local PostgreSQL regression is still useful to reproduce the original failures
+without a remote service. Test dependencies are separate from the application.
+
+Before production release:
+1. Finish review of PR #36 and its parent development branch.
+2. Reconcile missing historical migrations before attempting a fresh full CMS rebuild;
+   the isolated test project currently covers the core schema and Creator Studio.
+3. Validate the hosted PR preview after Vercel builds the final commit.
+4. Obtain explicit production release authorization, then apply the reviewed migration
+   and deploy the reviewed code in a controlled release.
 
 Removing the submission lock relies on the existing immutable approved-state
 policies and trigger. Any future approval-revocation workflow must revisit that
