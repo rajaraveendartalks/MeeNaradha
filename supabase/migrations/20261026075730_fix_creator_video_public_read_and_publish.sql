@@ -1,10 +1,9 @@
 -- Staging validation required before applying to any shared/production database.
 -- Keep the private role helper unavailable to anonymous callers.
-drop policy videos_read on public.videos;
+alter policy videos_read on public.videos to authenticated
+using ((select private.current_app_role()) = any (array['editor'::public.app_role,'admin'::public.app_role]));
 create policy videos_public_read on public.videos for select to anon, authenticated
 using (status = 'published'::public.content_status);
-create policy videos_staff_read on public.videos for select to authenticated
-using ((select private.current_app_role()) = any (array['editor'::public.app_role,'admin'::public.app_role]));
 
 -- Approved submissions are immutable through the existing policies and trigger.
 -- A SELECT FOR UPDATE would additionally require an UPDATE policy and hide these
