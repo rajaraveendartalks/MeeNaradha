@@ -7,8 +7,19 @@ export const dynamic='force-dynamic';
 export default async function Video({params}:{params:Promise<{slug:string}>}){
  const {slug}=await params;
  if(!db)throw new Error('Video service unavailable');
- const {data:video,error}=await db.from('videos').select('id,slug,title_te,title_en,thumbnail_url,content_type,external_id,video_url,description_te,description_en').eq('status','published').eq('slug',slug).maybeSingle();
- if(error)throw new Error('Unable to load video');
+ // Preserve exact legacy slugs before trying bounded decoding of hosted params.
+ const candidates=[slug];
+ for(let depth=0;depth<2;depth++){
+  try{const decoded=decodeURIComponent(candidates[candidates.length-1]);if(candidates.includes(decoded))break;candidates.push(decoded)}catch{break}
+ }
+ const legacySpaces=candidates[candidates.length-1].replace(/\+/g,' ');
+ if(!candidates.includes(legacySpaces))candidates.push(legacySpaces);
+ let video=null;
+ for(const candidate of candidates){
+  const result=await db.from('videos').select('id,slug,title_te,title_en,thumbnail_url,content_type,external_id,video_url,description_te,description_en').eq('status','published').eq('slug',candidate).maybeSingle();
+  if(result.error)throw new Error('Unable to load video');
+  if(result.data){video=result.data;break}
+ }
  if(!video)notFound();
  const youtubeId=/^[a-zA-Z0-9_-]{11}$/.test(video.external_id||'')?video.external_id:null;
  const originalUrl=typeof video.video_url==='string'&&/^https:\/\//i.test(video.video_url)?video.video_url:null;
