@@ -1,11 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
 for(const extension of ['.ts','.tsx'])require.extensions[extension]=(module,filename)=>module._compile(ts.transpileModule(fs.readFileSync(filename,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,filename);
 const React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),{JSDOM}=require('jsdom'),{articleShareData}=require('../lib/article-sharing.ts'),ArticleShare=require('../app/components/ArticleShare.tsx').default;
-const title='తెలుగు వార్త & కొత్త అప్డేట్ "చిరు"',url='https://www.meenarada.com/article/%E0%B0%B5%E0%B0%BE%E0%B0%B0%E0%B1%8D%E0%B0%A4?ref=a%26b',image='https://example.test/news.jpg';
+const title='తెలుగు వార్త & కొత్త + అప్డేట్ "చిరు"',url='https://www.meenarada.com/article/%E0%B0%B5%E0%B0%BE%E0%B0%B0%E0%B1%8D%E0%B0%A4?ref=a%26b',image='https://example.test/news.jpg';
 test('share destinations retain Telugu text and the complete article URL without parameter injection',()=>{
  const data=articleShareData(title,url,image),byName=Object.fromEntries(data.links.map(link=>[link.platform,new URL(link.href)]));
  for(const name of ['x','reddit','telegram','linkedin','pinterest'])assert.equal(byName[name].searchParams.get('url'),url);
  assert.equal(byName.facebook.searchParams.get('u'),url);assert.equal(byName.reddit.searchParams.get('title'),title);assert.ok(byName.whatsapp.searchParams.get('text').endsWith('\n'+url));assert.equal(byName.pinterest.searchParams.get('media'),image);
+ assert.ok(byName.whatsapp.href.includes('%20'));assert.ok(byName.whatsapp.href.includes('%2B'));assert.doesNotMatch(byName.whatsapp.href,/\+/);
  assert.equal(data.links.some(link=>new URL(link.href).searchParams.has('b')),false);assert.equal(articleShareData(title,url,null).links.some(link=>link.platform==='pinterest'),false);assert.equal(articleShareData(title,url,'javascript:alert(1)').links.some(link=>link.platform==='pinterest'),false);
  assert.throws(()=>articleShareData(title,'javascript:alert(1)'),/valid public URL/);assert.doesNotMatch(decodeURIComponent(articleShareData('Headline\r\nbcc:bad@example.test',url).email.split('&body=')[0]),/[\r\n]/);
 });

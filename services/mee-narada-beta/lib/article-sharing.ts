@@ -1,7 +1,7 @@
 import {safeHttpUrl} from './rich-content';
 export type SharePlatform='facebook'|'x'|'instagram'|'whatsapp'|'reddit'|'telegram'|'linkedin'|'pinterest';
 export type ArticleShareLink={platform:Exclude<SharePlatform,'instagram'>;label:string;href:string};
-const withQuery=(base:string,values:Record<string,string>)=>base+'?'+new URLSearchParams(values).toString();
+const withQuery=(base:string,values:Record<string,string>)=>base+'?'+new URLSearchParams(values).toString().replace(/\+/g,'%20');
 export function articleShareData(title:string,url:string,image?:string|null){
   const canonical=safeHttpUrl(url);if(!canonical)throw Error('Article sharing requires a valid public URL.');
   const headline=title.replace(/\s+/g,' ').trim()||'Mee Narada article',text=headline+' – Mee Narada',media=image?safeHttpUrl(image):null;
