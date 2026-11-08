@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:studio": "node --test tests/studio.test.cjs"
+    "test:studio": "node --test tests/studio.test.cjs tests/homepage.test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
