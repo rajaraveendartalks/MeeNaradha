@@ -33,7 +33,7 @@ begin
  if not blocked and (select config->>'headline' from public.site_typography where id='website')<>'mandali' then raise exception 'Editor changed website fonts';end if;
  blocked:=false;begin perform public.studio_writers();exception when insufficient_privilege then blocked:=true;end;
  if not blocked then raise exception 'Editor read private writer directory';end if;
- insert into public.news_articles(slug,headline_en,body_en,status,published_at) values('editorial-writer-'||gen_random_uuid(),'Rolled-back writer story','Test content','published',now()) returning id into article;
+ insert into public.news_articles(slug,headline_en,body_en,status,published_at) values('editorial-writer-'||gen_random_uuid(),'Rolled-back writer story','Test content','draft',null) returning id into article;
  perform set_config('editorial_test.editor_article',article::text,true);
  if (select author_id from public.news_articles where id=article)<>auth.uid() then raise exception 'Editor attribution failed';end if;
  blocked:=false;begin update public.news_articles set author_id=current_setting('editorial_test.admin')::uuid where id=article;exception when insufficient_privilege then blocked:=true;end;
@@ -41,6 +41,11 @@ begin
  blocked:=false;begin perform public.record_article_event(article,'view','none',repeat('a',64),repeat('b',64));exception when insufficient_privilege then blocked:=true;end;
  if not blocked then raise exception 'Browser role can bypass ingest';end if;
 end $test$;
+set local role postgres;
+select set_config('request.jwt.claims',jsonb_build_object('sub',current_setting('editorial_test.admin'),'role','authenticated')::text,true);
+set local role authenticated;
+-- Publication follows the administrator approval rule on production.
+update public.news_articles set status='published',published_at=now() where id=current_setting('editorial_test.editor_article')::uuid;
 set local role service_role;
 do $test$
 declare a uuid:=current_setting('editorial_test.admin_article')::uuid;e uuid:=current_setting('editorial_test.editor_article')::uuid;blocked boolean:=false;
@@ -56,6 +61,8 @@ begin
  for i in 1..65 loop perform public.record_article_event(e,'view','none',repeat('e',64),repeat('f',64));end loop;
  if public.record_article_event(e,'view','none',repeat('1',64),repeat('f',64)) then raise exception 'Ingest rate limit failed';end if;
 end $test$;
+set local role postgres;
+select set_config('request.jwt.claims',jsonb_build_object('sub',current_setting('editorial_test.editor'),'role','authenticated')::text,true);
 set local role authenticated;
 do $test$
 declare result jsonb;today date:=(now() at time zone 'Asia/Kolkata')::date;
