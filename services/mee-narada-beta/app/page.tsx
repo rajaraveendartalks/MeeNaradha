@@ -1,3 +1,4 @@
+import { SiteLogo } from "./components/SiteLogo";
 import Link from "next/link";
 import {Suspense} from "react";
 import HomeVideos from "./components/HomeVideos";
@@ -30,7 +31,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{section
   return {...group,items:matching.slice(0,sectionLimit(group.layout))};
  });
 
- return <><header className="top"><div className="wrap topin"><Link href="/" className="logo" aria-label="Mee Narada home">Mee <b>Narada</b><span className="beta-mark">BETA</span></Link><nav className="desktop-nav" aria-label="Main navigation"><Link href="/">హోమ్</Link><Link href="/?section=movies">సినిమాలు</Link><Link href="/?section=ott">OTT</Link><Link href="/gallery">ఫోటోలు</Link><Link href="/videos">వీడియోలు</Link></nav><Link className="editor-link" href="/admin">Editor Login</Link></div></header>
+ return <><header className="top"><div className="wrap topin"><SiteLogo badge="BETA"/><nav className="desktop-nav" aria-label="Main navigation"><Link href="/">హోమ్</Link><Link href="/?section=movies">సినిమాలు</Link><Link href="/?section=ott">OTT</Link><Link href="/gallery">ఫోటోలు</Link><Link href="/videos">వీడియోలు</Link></nav><Link className="editor-link" href="/admin">Editor Login</Link></div></header>
  <div className="ticker"><div className="wrap ticker-inner"><strong>తాజా అప్‌డేట్స్</strong><span>తెలుగు సినిమా • OTT • సెలబ్రిటీలు • వినోద వార్తలు</span></div></div>
  <main className="wrap homepage"><div className="intro"><div><div className="eyebrow">మీ తెలుగు ఎంటర్‌టైన్‌మెంట్ హబ్</div><h1 className="heading">{galleryMode?"ఫోటో గ్యాలరీలు":selected==="latest"?"తాజా వార్తలు":categories.find(c=>c.key===selected)?.label}</h1></div><span className="intro-caption">సినిమా ప్రపంచం మీ ముందుకు</span></div>
  <nav className="category-strip" aria-label="News categories">{categories.map(c=><Link key={c.key} href={c.key==="latest"?"/":c.key==="galleries"?"/gallery":c.key==="short-films"?"/videos?category=short_film":"/?section="+c.key} className={selected===c.key?"selected":""}>{c.label}</Link>)}</nav>
