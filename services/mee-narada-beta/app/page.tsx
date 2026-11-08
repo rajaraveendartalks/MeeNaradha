@@ -18,7 +18,7 @@ const newsCategories:{key:string;label:string;layout:NewsLayout;match:(category:
 const sectionLimit=(layout:NewsLayout)=>layout==='split'?5:layout==='compact'?12:10;
 export default async function Home({searchParams}:{searchParams:Promise<{section?:string}>}){
  const {section="latest"}=await searchParams;
- const [newsResult,galleryResult]=await Promise.all([db?db.from("news_articles").select("id,slug,headline_te,headline_en,dek_te,body_te,body_en,hero_image_url,category,status,published_at,created_at").eq("status","published").order("published_at",{ascending:false,nullsFirst:false}).limit(180):Promise.resolve({data:null}),db?db.from("image_galleries").select("id,slug,title_te,title_en,description_te,cover_image_url,status,created_at").eq("status","published").order("created_at",{ascending:false}).limit(12):Promise.resolve({data:null})]);
+ const [newsResult,galleryResult]=await Promise.all([db?db.from("news_articles").select("id,slug,headline_te,headline_en,dek_te,hero_image_url,category,status,published_at,created_at").eq("status","published").order("published_at",{ascending:false,nullsFirst:false}).limit(180):Promise.resolve({data:null}),db?db.from("image_galleries").select("id,slug,title_te,title_en,description_te,cover_image_url,status,created_at").eq("status","published").order("created_at",{ascending:false}).limit(12):Promise.resolve({data:null})]);
  const news=(newsResult.data||[]) as Article[];
  const galleries=(galleryResult.data||[]) as Gallery[];
  const selected=categories.some(c=>c.key===section)?section:"latest";
