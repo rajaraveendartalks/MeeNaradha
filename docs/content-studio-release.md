@@ -35,6 +35,6 @@ Run from services/mee-narada-beta:
     npm run test:studio
     npm run build
 
-The tests/studio.test.cjs suite checks legacy/rich content rendering, unsafe URL/HTML handling, Telugu-only validation, publication dates, stale writes and actual React screen flows for save/preview/publish/media selection/Trash/restore/logout and access denial.
+The tests/studio.test.cjs suite checks legacy/rich content rendering, unsafe URL/HTML handling, Telugu-only validation, publication dates, stale writes and actual React screen flows for save/preview/publish/media selection/Trash/restore/logout and access denial. The root CMS excludes the separately deployed services from its TypeScript project; run its own npm run build from the repository root when changing shared build configuration.
 
 Run supabase/tests/studio_posts_media_rls.sql in the target project to check staff post lifecycle, media permissions and blocked anonymous access. Its temporary article and storage metadata fixtures are inside a transaction and are rolled back.
