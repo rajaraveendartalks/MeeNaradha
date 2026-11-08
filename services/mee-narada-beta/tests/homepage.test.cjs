@@ -8,7 +8,7 @@ const initialState=()=>{const config=home.defaultHomeSettings();return {draft:{i
 
 test('homepage defaults match the current layout; invalid or duplicate settings normalize safely',()=>{
   const defaults=home.defaultHomeSettings();assert.deepEqual(defaults.sections.map(row=>row.id),['videos','movies','ott','celebrities','box-office','technology','politics','galleries']);assert.equal(defaults.featured.leadId,null);
-  const value=home.normalizeHomeSettings({...defaults,featured:{...defaults.featured,leadId:'https://bad.test',storyIds:[uuid(1),uuid(1),'javascript:alert(1)']},sections:[{id:'movies',title:'Movies',enabled:false,limit:1000,preset:'bad'},{id:'movies'},{id:'unknown'}]});
+  const value=home.normalizeHomeSettings({...defaults,featured:{...defaults.featured,leadId:'https://bad.test',storyIds:[uuid(1),uuid(1),'javascript:alert(1)']},sections:[{id:'movies',title:'Movies',enabled:false,limit:1000,preset:'bad'},{id:'movies'},{id:'invalid/section'}]});
   assert.equal(value.sections.length,8);assert.equal(value.sections[0].id,'movies');assert.equal(value.sections[0].enabled,false);assert.equal(value.sections[0].limit,24);assert.equal(value.sections[0].preset,'lead-cards');assert.equal(value.featured.leadId,null);assert.deepEqual(value.featured.storyIds,[uuid(1)]);
   const changed=home.defaultHomeSettings();changed.sections[0].limit=13;assert.throws(()=>home.validateHomeSettings(changed),/item count/);
   const selected=home.defaultHomeSettings();selected.featured.leadId=uuid(20);selected.featured.storyIds=[uuid(3),uuid(4)];

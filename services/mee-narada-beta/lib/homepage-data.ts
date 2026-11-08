@@ -2,10 +2,11 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import type {Article,Gallery} from './db';
 import type {PublicVideo} from './public-videos';
 import {defaultHomeSettings,normalizeHomeSettings,validateHomeSettings,type HomeSettings} from './homepage';
+import {defaultCategories,defaultNavigation,loadCategories,loadPublishedNavigation,type ContentCategory,type NavigationConfig} from './site-management';
 
 export const homeArticleColumns='id,slug,headline_te,headline_en,dek_te,hero_image_url,category,status,published_at,created_at';
-export type HomeContent={news:Article[];pinned:Article[];galleries:Gallery[];videos:PublicVideo[];videoError:boolean;contentError:boolean};
-export const emptyHomeContent=():HomeContent=>({news:[],pinned:[],galleries:[],videos:[],videoError:false,contentError:false});
+export type HomeContent={news:Article[];pinned:Article[];galleries:Gallery[];videos:PublicVideo[];videoError:boolean;contentError:boolean;categories:ContentCategory[];navigation:NavigationConfig};
+export const emptyHomeContent=():HomeContent=>({news:[],pinned:[],galleries:[],videos:[],videoError:false,contentError:false,categories:defaultCategories(),navigation:defaultNavigation()});
 export type HomepageRecord={id:'draft'|'published';config:HomeSettings;revision:number;updated_at:string};
 export type HomepageState={draft:HomepageRecord;published:HomepageRecord};
 function record(value:Record<string,unknown>):HomepageRecord{return {id:value.id as HomepageRecord['id'],config:normalizeHomeSettings(value.config),revision:Number(value.revision),updated_at:String(value.updated_at)}}
@@ -28,13 +29,13 @@ export async function saveHomepage(client:SupabaseClient,config:HomeSettings,sta
   return {draft:record(result.data.draft),published:record(result.data.published)};
 }
 export async function loadHomeContent(client:SupabaseClient):Promise<HomeContent>{
-  const [news,galleries,videos]=await Promise.all([
+  const [news,galleries,videos,categories,navigation]=await Promise.all([
     client.from('news_articles').select(homeArticleColumns).eq('status','published').order('published_at',{ascending:false,nullsFirst:false}).order('id',{ascending:false}).limit(180),
     client.from('image_galleries').select('id,slug,title_te,title_en,description_te,cover_image_url,status,created_at').eq('status','published').order('created_at',{ascending:false}).order('id',{ascending:false}).limit(12),
-    client.from('videos').select('id,slug,title_en,title_te,thumbnail_url,content_type,external_id,video_url').eq('status','published').order('published_at',{ascending:false,nullsFirst:false}).order('id',{ascending:false}).limit(12)
+    client.from('videos').select('id,slug,title_en,title_te,thumbnail_url,content_type,external_id,video_url').eq('status','published').order('published_at',{ascending:false,nullsFirst:false}).order('id',{ascending:false}).limit(12),loadCategories(client),loadPublishedNavigation(client)
   ]);
   for(const result of [news,galleries,videos])if(result.error)console.error('Homepage content query failed',result.error.message);
-  return {news:(news.data||[]) as Article[],pinned:[],galleries:(galleries.data||[]) as Gallery[],videos:(videos.data||[]) as PublicVideo[],videoError:Boolean(videos.error),contentError:Boolean(news.error||galleries.error)};
+  return {news:(news.data||[]) as Article[],pinned:[],galleries:(galleries.data||[]) as Gallery[],videos:(videos.data||[]) as PublicVideo[],videoError:Boolean(videos.error),contentError:Boolean(news.error||galleries.error),categories,navigation};
 }
 export async function loadPinnedStories(client:SupabaseClient,config:HomeSettings,known:Article[]=[]){
   const ids=[config.featured.leadId,...config.featured.storyIds].filter((id):id is string=>Boolean(id)&&!known.some(article=>article.id===id));

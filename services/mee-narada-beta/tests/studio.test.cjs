@@ -70,7 +70,7 @@ test("authorized editors can save, preview, publish, select media, trash and res
     update(value){this.operation="update";this.payload=value;return this}insert(value){this.operation="insert";this.payload=value;return this}
     single(){this.singleRow=true;return this}maybeSingle(){this.singleRow=true;return this}
     then(resolve,reject){return Promise.resolve().then(()=>{
-      let result=this.table==="user_roles"?roles.map(role=>({role,user_id:user?.id})):rows.filter(r=>this.filters.every(f=>f(r)));
+      let result=this.table==="user_roles"?roles.map(role=>({role,user_id:user?.id})):this.table==="content_categories"||this.table==="site_navigation"?[]:rows.filter(r=>this.filters.every(f=>f(r)));
       if(this.operation==="insert"){const row={...base(),...this.payload};rows.push(row);result=[row]}
       if(this.operation==="update"){result.forEach(row=>Object.assign(row,this.payload,{updated_at:now()}))}
       const count=result.length;result=result.slice(this.start,this.end+1).map(r=>({...r}));

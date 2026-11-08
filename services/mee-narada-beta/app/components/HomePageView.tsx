@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import {SiteLogo} from './SiteLogo';
+import {SiteHeaderView,SiteFooterView,MenuLinks} from './SiteNavigationView';
+import {categoryLabel,findCategory} from '../../lib/site-management';
 import {CategoryNews,type NewsLayout} from './CategoryNews';
 import {VideoPreset} from './VideoPreset';
 import {VideoFilters} from './PublicVideoCards';
 import {titleOf,type Article,type Gallery} from '../../lib/db';
-import {featuredStories,homeCategories,matchesHomeCategory,type HomeSettings,type HomeSection} from '../../lib/homepage';
+import {featuredStories,matchesHomeCategory,type HomeSettings,type HomeSection} from '../../lib/homepage';
 import type {HomeContent} from '../../lib/homepage-data';
 
 const newsLayout=(section:HomeSection):NewsLayout=>section.preset==='lead-headlines'?'split':section.preset==='lead-cards'?'lead-grid':'compact';
@@ -18,19 +19,19 @@ function HomepageSection({section,content,preview}:{section:HomeSection;content:
   if(!section.enabled)return null;
   if(section.id==='videos')return <section className="section-block public-home-videos" aria-labelledby="homepage-videos-title"><div className="section-title"><div><span className="eyebrow">TRAILERS · SONGS · SHORT FILMS</span><h2 id="homepage-videos-title">{section.title} <span className="public-video-heading-en">Videos</span></h2></div><Link href="/videos">అన్నీ చూడండి →</Link></div><VideoFilters home/>{content.videoError?<p className="notice" role="status">వీడియోలను ప్రస్తుతం లోడ్ చేయలేకపోయాము. <Link href="/videos">మళ్లీ ప్రయత్నించండి →</Link></p>:content.videos.length?<VideoPreset videos={content.videos.slice(0,section.limit)} preset={section.preset}/>:<p className="muted">ప్రచురించిన వీడియోలు త్వరలో ఇక్కడ కనిపిస్తాయి.</p>}</section>;
   if(section.id==='galleries')return content.galleries.length?<section className="section-block"><div className="section-title"><h2>{section.title}</h2><Link href="/gallery">అన్నీ చూడండి →</Link></div><GalleryCards galleries={content.galleries.slice(0,section.limit)}/></section>:null;
-  return <CategoryNews id={'news-'+section.id} title={section.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,section.id)).slice(0,section.limit)} layout={newsLayout(section)} viewAll={'/?section='+section.id} preview={preview}/>;
+  return <CategoryNews id={'news-'+section.id} title={section.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,section.id,content.categories)).slice(0,section.limit)} layout={newsLayout(section)} viewAll={'/?section='+section.id} preview={preview}/>;
 }
 export function HomePageView({settings,content,section='latest',preview=false}:{settings:HomeSettings;content:HomeContent;section?:string;preview?:boolean}){
-  const selected=homeCategories.some(category=>category.key===section)?section:'latest',category=settings.sections.find(row=>row.id===selected),galleryMode=selected==='galleries';
+  const found=findCategory(content.categories,section),selected=section==='galleries'?'galleries':found?.slug||'latest',category=settings.sections.find(row=>row.id===selected)||(found?{id:found.slug,title:categoryLabel(found),enabled:true,limit:24,preset:'lead-cards' as const}:undefined),galleryMode=selected==='galleries';
   const {lead,stories}=featuredStories(settings,content.news,content.pinned);
-  return <div className="public-home-page"><header className="top"><div className="wrap topin"><SiteLogo/><nav className="desktop-nav" aria-label="Main navigation"><Link href="/">హోమ్</Link><Link href="/?section=movies">సినిమాలు</Link><Link href="/?section=ott">OTT</Link><Link href="/gallery">ఫోటోలు</Link><Link href="/videos">వీడియోలు</Link></nav><Link className="editor-link" href="/admin">Editor Login</Link></div></header>
+  return <div className="public-home-page"><SiteHeaderView navigation={content.navigation} editorLogin/>
     {settings.ticker.enabled&&<div className="ticker"><div className="wrap ticker-inner"><strong>{settings.ticker.label}</strong><span>{settings.ticker.text}</span></div></div>}
-    <main className="wrap homepage"><div className="intro"><div><div className="eyebrow">{settings.intro.eyebrow}</div><h1 className="heading">{galleryMode?'ఫోటో గ్యాలరీలు':selected==='latest'?settings.intro.title:homeCategories.find(row=>row.key===selected)?.label}</h1></div><span className="intro-caption">{settings.intro.caption}</span></div>
-      <nav className="category-strip" aria-label="News categories">{homeCategories.map(row=><Link key={row.key} href={row.key==='latest'?'/':row.key==='galleries'?'/gallery':row.key==='short-films'?'/videos?category=short_film':'/?section='+row.key} className={selected===row.key?'selected':''}>{row.label}</Link>)}</nav>
+    <main className="wrap homepage"><div className="intro"><div><div className="eyebrow">{settings.intro.eyebrow}</div><h1 className="heading">{galleryMode?'ఫోటో గ్యాలరీలు':selected==='latest'?settings.intro.title:found?categoryLabel(found):category?.title}</h1></div><span className="intro-caption">{settings.intro.caption}</span></div>
+      <nav className="category-strip" aria-label="News categories"><MenuLinks items={content.navigation.menus.categories} selected={selected}/></nav>
       {content.contentError&&<p className="notice" role="status">కొంత కంటెంట్ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి మళ్లీ ప్రయత్నించండి.</p>}
       {galleryMode?<section className="section-block"><div className="section-title"><h2>ఫోటో గ్యాలరీలు</h2></div><GalleryCards galleries={content.galleries}/>{!content.galleries.length&&<p className="muted">ఈ విభాగంలో ఇంకా ప్రచురించిన కంటెంట్ లేదు.</p>}</section>:selected==='latest'?<>
         {settings.featured.enabled&&lead&&<section className="lead-section" aria-label="Featured stories"><div className="lead-column"><StoryCard article={lead} variant="lead"/></div>{stories.length>0&&<aside className="side-column"><div className="sidebar-heading"><span className="live-dot"/> {settings.featured.title} <span className="sidebar-more">తాజా అప్‌డేట్స్</span></div>{stories.map(article=><StoryCard key={article.id} article={article} variant="compact"/>)}</aside>}</section>}
         <div className="category-news-sections">{settings.sections.map(row=><HomepageSection key={row.id} section={row} content={content} preview={preview}/>)}</div>
-      </>:category&&<CategoryNews id={'news-'+selected} title={category.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,category.id))} layout={newsLayout(category)} heading={false} preview={preview}/>}
-    </main><footer className="footer"><div className="wrap footer-inner"><span>© Mee Narada Beta · Telugu Entertainment</span><span>సినిమా • వార్తలు • OTT</span></div></footer></div>;
+      </>:category&&<CategoryNews id={'news-'+selected} title={category.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,category.id,content.categories))} layout={newsLayout(category)} heading={false} preview={preview}/>}
+    </main><SiteFooterView navigation={content.navigation} beta/></div>;
 }

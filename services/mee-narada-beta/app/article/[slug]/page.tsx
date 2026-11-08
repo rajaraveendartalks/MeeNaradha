@@ -1,8 +1,8 @@
+import {PublicSiteHeader,PublicSiteFooter} from "../../components/PublicSiteNavigation";
 import type {Metadata} from "next";
 import Link from "next/link";
 import {cache} from "react";
 import {notFound} from "next/navigation";
-import {SiteLogo} from "../../components/SiteLogo";
 import {ArticleContent} from "../../components/ArticleContent";
 import {db,titleOf,type Article} from "../../../lib/db";
 import {articleText,preferredArticleBody} from "../../../lib/rich-content";
@@ -23,5 +23,5 @@ export async function generateMetadata({params}:{params:Promise<{slug:string}>})
 export default async function Page({params}:{params:Promise<{slug:string}>}){
   const article=await getArticle((await params).slug);if(!article)notFound();
   const title=titleOf(article),url=siteUrl+"/article/"+encodeURIComponent(article.slug);
-  return <><header className="top"><div className="wrap topin"><SiteLogo/><Link href="/">← వార్తలు</Link></div></header><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)}/><p><a href={"https://wa.me/?text="+encodeURIComponent(title+" "+url)} target="_blank" rel="noopener noreferrer">WhatsAppలో షేర్ చేయండి ↗</a></p></article></>;
+  return <><PublicSiteHeader/><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)}/><p><a href={"https://wa.me/?text="+encodeURIComponent(title+" "+url)} target="_blank" rel="noopener noreferrer">WhatsAppలో షేర్ చేయండి ↗</a></p></article><PublicSiteFooter/></>;
 }
