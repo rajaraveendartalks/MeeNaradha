@@ -1,0 +1,29 @@
+'use client';
+import {useEffect,useMemo,useState} from 'react';
+import {useRouter} from 'next/navigation';
+import {newsOpportunities,newsTopics,researchUrl,topicCategory,type NewsFeed,type NewsOpportunity,type NewsScope,type NewsTopic} from '../../../lib/news-desk';
+import {blankDraft,errorMessage,savePost} from '../../../lib/studio-data';
+import {useStudio} from './StudioShell';
+
+export default function NewsDesk(){
+  const {client}=useStudio(),router=useRouter(),[topic,setTopic]=useState<NewsTopic>('entertainment'),[scope,setScope]=useState<NewsScope>('telugu'),[order,setOrder]=useState<'opportunity'|'latest'>('opportunity'),[feed,setFeed]=useState<NewsFeed|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[busy,setBusy]=useState(''),[reload,setReload]=useState(0);
+  useEffect(()=>{
+    let active=true;const controller=new AbortController();setLoading(true);setError('');setFeed(null);
+    async function load(){
+      try{const {data:{session}}=await client.auth.getSession();if(!session)throw Error('Sign in again to load the news desk.');const response=await fetch('/api/studio/news?'+new URLSearchParams({topic,scope}),{headers:{Authorization:'Bearer '+session.access_token},signal:controller.signal});const data=await response.json();if(!response.ok)throw Error(data.error||'The news feed could not be loaded.');if(active)setFeed(data)}
+      catch(error){if(active&&!controller.signal.aborted)setError(errorMessage(error))}finally{if(active)setLoading(false)}
+    }
+    void load();const interval=window.setInterval(()=>{if(document.visibilityState==='visible')void load()},15*60*1000);
+    return()=>{active=false;controller.abort();window.clearInterval(interval)};
+  },[client,topic,scope,reload]);
+  const opportunities=useMemo(()=>newsOpportunities(feed?.items||[],new Date(),order),[feed,order]);
+  async function draft(item:NewsOpportunity){if(busy)return;setBusy(item.id);setError('');try{const post=await savePost(client,{...blankDraft,headline_en:item.title,source_name:item.source,source_url:item.url,category:topicCategory[topic]},'draft');router.push('/admin/posts/'+post.id)}catch(error){setError(errorMessage(error));setBusy('')}}
+  return <div><div className="studio-heading"><div><h1>News Desk</h1><p>Fresh leads. Clear sources. Your editorial judgment.</p></div><div className="studio-actions"><a className="studio-button" href={researchUrl(topic,scope)} target="_blank" rel="noopener noreferrer">Open news search ↗</a><button className="studio-button studio-primary" disabled={loading} onClick={()=>setReload(value=>value+1)}>{loading?'Updating…':'↻ Refresh'}</button></div></div>
+    <div className="studio-news-tabs" role="tablist" aria-label="News topics">{newsTopics.map(([value,label])=><button type="button" role="tab" aria-selected={topic===value} key={value} onClick={()=>setTopic(value)}>{label}</button>)}</div>
+    <div className="studio-tools-toolbar"><div className="studio-actions"><label>Focus <select value={scope} onChange={event=>setScope(event.target.value as NewsScope)}><option value="telugu">AP · Telangana · Telugu</option><option value="india">All India</option></select></label><label>Sort <select value={order} onChange={event=>setOrder(event.target.value as typeof order)}><option value="opportunity">Coverage opportunities</option><option value="latest">Newest first</option></select></label></div><span className="studio-hint">{feed?'Checked '+new Date(feed.fetched_at).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})+' IST · auto updates every 15 min':'Last 48 hours'}</span></div>
+    <div className="studio-news-explainer"><strong>How to use the signal</strong><p>High = similar headlines from 3+ publishers within 12 hours. Watch = 2+ publishers within 24 hours. These are coverage signals to help you spot an opportunity, not a prediction of views or proof of social virality.</p></div>
+    {error&&<p role="alert" className="studio-message studio-error">{error}</p>}
+    {loading?<p className="studio-empty" role="status">Finding the latest headlines…</p>:!opportunities.length?<div className="studio-panel studio-empty"><h2>{error?'News feed unavailable':'No fresh matches in this focus'}</h2><p>Try All India, another topic, or the source search above.</p></div>:<section className="studio-news-list" aria-label="News opportunities">{opportunities.map(item=><article key={item.id} className="studio-news-lead"><div className="studio-news-lead-top"><span className={'studio-signal '+item.signal.toLowerCase()}>{item.signal==='High'?'High coverage':item.signal==='Watch'?'Watch this':'New lead'}</span><span>{item.source} · {new Date(item.published_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} IST</span></div><h2><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title} ↗</a></h2><p className="studio-hint">{item.reason}</p>{item.related.length>0&&<details><summary>Compare {item.related.length} related headline{item.related.length===1?'':'s'}</summary><ul>{item.related.map(row=><li key={row.id}><a className="studio-link" href={row.url} target="_blank" rel="noopener noreferrer">{row.source} · {row.title} ↗</a></li>)}</ul></details>}<div className="studio-actions"><button type="button" className="studio-button" disabled={Boolean(busy)} onClick={()=>void draft(item)}>{busy===item.id?'Creating…':'＋ Create draft'}</button><a className="studio-link" href={item.url} target="_blank" rel="noopener noreferrer">Read original ↗</a></div></article>)}</section>}
+    <p className="studio-hint studio-tools-footnote">Headlines and source links via Google News RSS. Open the original reporting, verify independently and write your own Telugu article. Creating a draft never publishes it.</p>
+  </div>;
+}

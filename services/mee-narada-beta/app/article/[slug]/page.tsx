@@ -1,6 +1,7 @@
 import {PublicSiteHeader,PublicSiteFooter} from "../../components/PublicSiteNavigation";
 import type {Metadata} from "next";
 import ArticleShare from "../../components/ArticleShare";
+import ArticleAnalytics from "../../components/ArticleAnalytics";
 import {cache} from "react";
 import {notFound} from "next/navigation";
 import {ArticleContent} from "../../components/ArticleContent";
@@ -23,5 +24,5 @@ export async function generateMetadata({params}:{params:Promise<{slug:string}>})
 export default async function Page({params}:{params:Promise<{slug:string}>}){
   const article=await getArticle((await params).slug);if(!article)notFound();
   const title=titleOf(article),url=siteUrl+"/article/"+encodeURIComponent(article.slug);
-  return <><PublicSiteHeader/><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)}/><ArticleShare key={article.id} title={title} url={url} image={article.hero_image_url}/></article><PublicSiteFooter/></>;
+  return <><PublicSiteHeader/><ArticleAnalytics articleId={article.id}/><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)}/><ArticleShare key={article.id} articleId={article.id} title={title} url={url} image={article.hero_image_url}/></article><PublicSiteFooter/></>;
 }

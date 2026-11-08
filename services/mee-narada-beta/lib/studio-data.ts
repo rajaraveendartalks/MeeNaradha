@@ -3,13 +3,13 @@ import { articleHasContent, safeHttpUrl } from "./rich-content";
 
 export type PostStatus = "draft" | "in_review" | "scheduled" | "published" | "archived";
 export type StudioPost = {
-  id:string; slug:string; headline_te:string|null; headline_en:string; body_te:string|null; body_en:string|null;
+  id:string; author_id?:string|null; slug:string; headline_te:string|null; headline_en:string; body_te:string|null; body_en:string|null;
   dek_te:string|null; dek_en:string|null; hero_image_url:string|null; category:string|null; source_name:string|null; source_url:string|null;
   is_breaking:boolean; status:PostStatus; published_at:string|null; created_at:string; updated_at:string;
 };
 export type PostDraft = { headline_te:string; headline_en:string; body_te:string; body_en:string; dek_te:string; dek_en:string; hero_image_url:string; category:string; slug:string; source_name:string; source_url:string; is_breaking:boolean };
 export const blankDraft:PostDraft={headline_te:"",headline_en:"",body_te:"",body_en:"",dek_te:"",dek_en:"",hero_image_url:"",category:"movies",slug:"",source_name:"",source_url:"",is_breaking:false};
-export const postColumns="id,slug,headline_te,headline_en,dek_te,dek_en,body_te,body_en,hero_image_url,category,source_name,source_url,is_breaking,status,published_at,created_at,updated_at";
+export const postColumns="id,author_id,slug,headline_te,headline_en,dek_te,dek_en,body_te,body_en,hero_image_url,category,source_name,source_url,is_breaking,status,published_at,created_at,updated_at";
 export const listColumns="id,slug,headline_te,headline_en,hero_image_url,category,status,published_at,created_at,updated_at";
 export type PostListItem=Pick<StudioPost,"id"|"slug"|"headline_te"|"headline_en"|"hero_image_url"|"category"|"status"|"published_at"|"created_at"|"updated_at">;
 export const statusNames:Record<PostStatus,string>={draft:"Draft",in_review:"Pending review",scheduled:"Scheduled",published:"Published",archived:"Trash"};
@@ -49,8 +49,9 @@ export function postPayload(draft:PostDraft,status:PostStatus,original?:StudioPo
   if(!slug||/[/?#\s]/.test(slug))throw Error("The URL slug cannot contain spaces, slashes, ? or #.");
   return {headline_te:draft.headline_te.trim()||null,headline_en:draft.headline_en.trim()||headline,body_te:bodyTe,body_en:bodyEn,dek_te:draft.dek_te.trim()||null,dek_en:draft.dek_en.trim()||null,hero_image_url:hero||null,category:draft.category||"movies",slug,source_name:draft.source_name.trim()||null,source_url:sourceUrl||null,is_breaking:draft.is_breaking,status,published_at:status==="published"?(original?.published_at||now):(original?.published_at||null)};
 }
-export async function savePost(client:SupabaseClient,draft:PostDraft,status:PostStatus,original?:StudioPost|null):Promise<StudioPost>{
-  const payload=postPayload(draft,status,original);
+export async function savePost(client:SupabaseClient,draft:PostDraft,status:PostStatus,original?:StudioPost|null,authorId?:string|null):Promise<StudioPost>{
+  const payload:ReturnType<typeof postPayload>&{author_id?:string|null}=postPayload(draft,status,original);
+  if(authorId!==undefined)payload.author_id=authorId;
   const run=()=>original?client.from("news_articles").update(payload).eq("id",original.id).eq("updated_at",original.updated_at).select(postColumns).maybeSingle():client.from("news_articles").insert(payload).select(postColumns).single();
   let result=await run();
   if(!original&&!draft.slug.trim()&&result.error?.code==="23505"){payload.slug+="-"+crypto.randomUUID().slice(0,8);result=await run()}
