@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {useEffect,useMemo,useState} from "react";
 import {changePostStatuses,errorMessage,fetchPosts,postCategories,statusNames,type PostListItem,type PostStatus} from "../../../lib/studio-data";
+import {loadCategories,defaultCategories,findCategory,categoryValues} from "../../../lib/site-management";
 import {useStudio} from "./StudioShell";
 
 const filters:[string,string][]=[["all","All"],["published","Published"],["draft","Draft"],["in_review","Pending review"],["scheduled","Scheduled"],["archived","Trash"]];
@@ -9,14 +10,16 @@ const dateFormatter=new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short"
 export default function PostsScreen(){
   const {client}=useStudio(),[status,setStatus]=useState<"all"|PostStatus>("all"),[search,setSearch]=useState(""),[term,setTerm]=useState(""),[category,setCategory]=useState(""),[page,setPage]=useState(0),[reload,setReload]=useState(0);
   const [items,setItems]=useState<PostListItem[]>([]),[count,setCount]=useState(0),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState(""),[selected,setSelected]=useState<Set<string>>(new Set()),[action,setAction]=useState(""),[undo,setUndo]=useState<string[]>([]);
+  const [catalog,setCatalog]=useState(defaultCategories);
+  useEffect(()=>{let active=true;void loadCategories(client).then(rows=>{if(active)setCatalog(rows)});return()=>{active=false}},[client]);
   useEffect(()=>{const timeout=window.setTimeout(()=>{setTerm(search);setPage(0)},250);return()=>window.clearTimeout(timeout)},[search]);
   useEffect(()=>{
     let active=true;setLoading(true);setError("");setSelected(new Set());
-    void fetchPosts(client,{status,search:term,category,page}).then(result=>{if(!active)return;if(page>0&&!result.items.length&&result.count){setPage(Math.max(0,Math.ceil(result.count/25)-1));return}setItems(result.items);setCount(result.count)}).catch(error=>{if(active){setError(errorMessage(error));setItems([]);setCount(0)}}).finally(()=>{if(active)setLoading(false)});
+    void fetchPosts(client,{status,search:term,category,categoryValues:categoryValues(findCategory(catalog,category)||{slug:category,aliases:[]}),page}).then(result=>{if(!active)return;if(page>0&&!result.items.length&&result.count){setPage(Math.max(0,Math.ceil(result.count/25)-1));return}setItems(result.items);setCount(result.count)}).catch(error=>{if(active){setError(errorMessage(error));setItems([]);setCount(0)}}).finally(()=>{if(active)setLoading(false)});
     return()=>{active=false};
-  },[client,status,term,category,page,reload]);
-  const categories=useMemo(()=>Array.from(new Set([...postCategories.map(([key])=>String(key)),...items.map(item=>item.category).filter((value):value is string=>Boolean(value)),...(category?[category]:[])])),[items,category]);
-  const categoryName=(key:string|null)=>postCategories.find(([value])=>value===key)?.[1]||key||"Uncategorized";
+  },[client,status,term,category,page,reload,catalog]);
+  const categories=useMemo(()=>Array.from(new Set([...catalog.map(row=>row.slug),...items.map(item=>findCategory(catalog,item.category)?.slug||item.category).filter((value):value is string=>Boolean(value)),...(category?[category]:[])])),[items,category,catalog]);
+  const categoryName=(key:string|null)=>findCategory(catalog,key)?.name_en||key||"Uncategorized";
   function toggle(id:string){setSelected(previous=>{const next=new Set(previous);next.has(id)?next.delete(id):next.add(id);return next})}
   async function change(ids:string[],next:"draft"|"in_review"|"archived"){
     if(!ids.length)return;

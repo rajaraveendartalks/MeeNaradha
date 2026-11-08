@@ -22,11 +22,11 @@ export function errorMessage(error:unknown):string {
   if(error&&typeof error==="object"&&"code" in error){if(error.code==="42501")return "Your account cannot perform this action. Please contact your administrator.";if(error.code==="PGRST301")return "Your session expired. Please sign in again."}
   return error instanceof Error?error.message:error&&typeof error==="object"&&"message" in error?String(error.message):"Something went wrong. Please try again.";
 }
-export async function fetchPosts(client:SupabaseClient,options:{status:"all"|PostStatus;search:string;category:string;page:number;pageSize?:number}){
+export async function fetchPosts(client:SupabaseClient,options:{status:"all"|PostStatus;search:string;category:string;categoryValues?:string[];page:number;pageSize?:number}){
   const pageSize=options.pageSize||25;
   let query=client.from("news_articles").select(listColumns,{count:"exact"}).order("updated_at",{ascending:false}).order("id",{ascending:false});
   query=options.status==="all"?query.neq("status","archived"):query.eq("status",options.status);
-  if(options.category)query=query.eq("category",options.category);
+  if(options.category)query=query.in("category",options.categoryValues?.length?options.categoryValues:[options.category]);
   const term=options.search.replace(/[,%()\\]/g," ").trim().slice(0,150);
   if(term)query=query.or("headline_te.ilike.%"+term+"%,headline_en.ilike.%"+term+"%");
   const {data,error,count}=await query.range(options.page*pageSize,(options.page+1)*pageSize-1);
@@ -39,6 +39,7 @@ export async function fetchPost(client:SupabaseClient,id:string):Promise<StudioP
 export function postPayload(draft:PostDraft,status:PostStatus,original?:StudioPost|null,now=new Date().toISOString()){
   const headline=draft.headline_te.trim()||draft.headline_en.trim();
   if(!headline)throw Error("Add a title before saving.");
+  if(!draft.category.trim())throw Error("Choose a category before saving.");
   const bodyTe=articleHasContent(draft.body_te)?draft.body_te:null,bodyEn=articleHasContent(draft.body_en)?draft.body_en:null;
   if(status==="published"&&!bodyTe&&!bodyEn)throw Error("Add article content before publishing.");
   const sourceUrl=draft.source_url.trim(),hero=draft.hero_image_url.trim();
