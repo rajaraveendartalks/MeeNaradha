@@ -1,0 +1,10 @@
+@font-face{font-family:'MN Noto Sans Telugu';src:url('/fonts/noto-sans-telugu.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'MN Noto Serif Telugu';src:url('/fonts/noto-serif-telugu.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'MN Mandali';src:url('/fonts/mandali.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'MN Ramabhadra';src:url('/fonts/ramabhadra.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'MN NTR';src:url('/fonts/ntr.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'MN Hind Guntur';src:url('/fonts/hind-guntur.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+body{font-family:var(--news-body-font,system-ui),sans-serif}
+.detail h1,.homepage h1,.homepage h2,.section-title h2,.section h1,.section h2,.news-copy h2,.news-card h3,.rich-article h2,.rich-article h3{font-family:var(--news-heading-font,inherit)}
+.detail .rich-article{font-size:var(--news-body-size,18px);line-height:var(--news-line-height,1.95)}
+@media(max-width:600px){.detail .rich-article{font-size:calc(var(--news-body-size,18px) - 1px)}}

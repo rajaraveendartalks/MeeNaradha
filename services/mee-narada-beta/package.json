@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test:share": "node --test tests/article-sharing.test.cjs",
-    "test:studio": "node --test tests/studio.test.cjs tests/homepage.test.cjs tests/management.test.cjs && node tests/check-edge.cjs"
+    "test:studio": "node --test tests/studio.test.cjs tests/homepage.test.cjs tests/management.test.cjs && node tests/check-edge.cjs",
+    "test:editorial": "node --test tests/editorial.test.cjs && node tests/check-edge.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -17,6 +18,7 @@
     "@tiptap/pm": "3.33.0",
     "@tiptap/react": "3.33.0",
     "@tiptap/starter-kit": "3.33.0",
+    "fast-xml-parser": "5.12.0",
     "next": "^15.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
