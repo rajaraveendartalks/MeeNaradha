@@ -48,7 +48,7 @@ test("stale article updates fail visibly and non-image uploads are rejected",asy
   const query={update(){return this},eq(){return this},select(){return this},async maybeSingle(){return {data:null,error:null}}};
   await assert.rejects(data.savePost({from:()=>query},{...data.blankDraft,headline_te:"వార్త"},"draft",{id:"one",slug:"original",updated_at:"old",published_at:null}),/changed in another session/);
   await assert.rejects(data.uploadMedia({}, {type:"image/svg+xml",size:10,name:"unsafe.svg"}),/JPG/);
-  await assert.rejects(data.uploadMedia({}, {type:"image/png",size:9*1024*1024,name:"large.png"}),/8 MB/);
+  await assert.rejects(data.uploadMedia({}, {type:"image/png",size:41*1024*1024,name:"large.png"}),/40 MB/);
 });
 test("authorized editors can save, preview, publish, select media, trash and restore through the real screens",async()=>{
   const {JSDOM}=require("jsdom"),dom=new JSDOM("<div id='root'></div>",{url:"https://studio.example/admin",pretendToBeVisual:true});

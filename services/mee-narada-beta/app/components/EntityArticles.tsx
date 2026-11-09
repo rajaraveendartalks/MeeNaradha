@@ -1,0 +1,4 @@
+import Link from 'next/link';
+import {db} from '../../lib/db';
+import {loadEntityArticles,type ArticleEntity} from '../../lib/article-entities';
+export default async function EntityArticles({entity}:{entity:ArticleEntity}){const articles=db?await loadEntityArticles(db,entity).catch(()=>[]):[];return <section className="section-block"><div className="section-title"><h2>Related news · సంబంధిత వార్తలు</h2></div>{articles.length?<div className="profile-gallery-grid">{articles.map(article=><Link className="profile-gallery-card" href={'/article/'+encodeURIComponent(article.slug)} key={article.id}>{article.hero_image_url&&<img src={article.hero_image_url} alt="" loading="lazy"/>}<strong>{article.headline_te||article.headline_en}</strong></Link>)}</div>:<p className="muted">No related published articles yet.</p>}</section>}

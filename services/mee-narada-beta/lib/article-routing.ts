@@ -1,7 +1,7 @@
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {Article} from './db';
 export type ArticleRecord=Article&{dek_en:string|null};
-export const articleRouteColumns='id,slug,headline_te,headline_en,dek_te,dek_en,body_te,body_en,hero_image_url,category,status,published_at,created_at';
+export const articleRouteColumns='id,slug,headline_te,headline_en,dek_te,dek_en,body_te,body_en,hero_image_url,category,status,published_at,created_at,auto_link_entities';
 /** Hosted route params may still contain URI escapes. Keep exact legacy matches first. */
 export function articleSlugCandidates(raw:string):string[]{
  if(typeof raw!=='string'||!raw||raw.length>2048)return [];

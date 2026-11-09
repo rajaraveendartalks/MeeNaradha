@@ -1,5 +1,6 @@
 import React from "react";
 import {articleAdIndex,articleDocument,safeColor,safeHttpUrl,youtubeId,type RichNode} from "../../lib/rich-content";
+import {linkArticleDocument,type ArticleEntity} from '../../lib/article-entities';
 
 /** Render allowlisted document nodes with React; author input is never HTML. */
 function nodeContent(node:RichNode,key:React.Key):React.ReactNode{
@@ -14,6 +15,7 @@ function nodeContent(node:RichNode,key:React.Key):React.ReactNode{
       else if(mark.type==="code")content=<code key={mk}>{content}</code>;
       else if(mark.type==="textStyle"){const color=safeColor(mark.attrs?.color);if(color)content=<span style={{color}} key={mk}>{content}</span>}
       else if(mark.type==="link"){const href=safeHttpUrl(mark.attrs?.href);if(href)content=<a key={mk} href={href} target="_blank" rel="noopener noreferrer">{content}</a>}
+      else if(mark.type==='entityLink'){const href=String(mark.attrs?.href||'');if(/^\/(movie|celebrity|studio)\/[^/?#]+$/u.test(href))content=<a key={mk} href={href} className="article-entity-link" title={'View '+String(mark.attrs?.label||'profile')}>{content}</a>}
     }
     return <React.Fragment key={key}>{content}</React.Fragment>;
   }
@@ -34,4 +36,4 @@ function nodeContent(node:RichNode,key:React.Key):React.ReactNode{
     default:return <React.Fragment key={key}>{children}</React.Fragment>;
   }
 }
-export function ArticleContent({value,inlineAd}:{value:string;inlineAd?:React.ReactNode}){const document=articleDocument(value),adIndex=inlineAd?articleAdIndex(document):-1;return <div className="rich-article">{adIndex<0?nodeContent(document,"article"):(document.content||[]).map((node,index)=><React.Fragment key={index}>{nodeContent(node,'article-'+index)}{index===adIndex&&inlineAd}</React.Fragment>)}</div>}
+export function ArticleContent({value,inlineAd,entities=[],autoLinkEntities=true}:{value:string;inlineAd?:React.ReactNode;entities?:ArticleEntity[];autoLinkEntities?:boolean}){const {document}=linkArticleDocument(articleDocument(value),entities,autoLinkEntities),adIndex=inlineAd?articleAdIndex(document):-1;return <div className="rich-article">{adIndex<0?nodeContent(document,"article"):(document.content||[]).map((node,index)=><React.Fragment key={index}>{nodeContent(node,'article-'+index)}{index===adIndex&&inlineAd}</React.Fragment>)}</div>}
