@@ -7,6 +7,11 @@ import {notFound} from "next/navigation";
 import {ArticleContent} from "../../components/ArticleContent";
 import {db,titleOf,type Article} from "../../../lib/db";
 import {articleText,preferredArticleBody} from "../../../lib/rich-content";
+import {loadArticleSidebar} from '../../../lib/article-layout';
+import {emptyAdInventory,loadAdInventory} from '../../../lib/advertising';
+import {categorySlug,findCategory,loadCategories} from '../../../lib/site-management';
+import AdSlot from '../../components/AdSlot';
+import ArticleSidebar from '../../components/ArticleSidebar';
 export const dynamic="force-dynamic";
 type ArticleRecord=Article&{dek_en:string|null};
 const getArticle=cache(async(slug:string):Promise<ArticleRecord|null>=>{
@@ -24,5 +29,7 @@ export async function generateMetadata({params}:{params:Promise<{slug:string}>})
 export default async function Page({params}:{params:Promise<{slug:string}>}){
   const article=await getArticle((await params).slug);if(!article)notFound();
   const title=titleOf(article),url=siteUrl+"/article/"+encodeURIComponent(article.slug);
-  return <><PublicSiteHeader/><ArticleAnalytics articleId={article.id}/><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)}/><ArticleShare key={article.id} articleId={article.id} title={title} url={url} image={article.hero_image_url}/></article><PublicSiteFooter/></>;
+  const [sections,inventory,categories]=await Promise.all([db?loadArticleSidebar(db,article.id).catch(()=>[]):[],db?loadAdInventory(db).catch(()=>emptyAdInventory()):emptyAdInventory(),db?loadCategories(db).catch(()=>[]):[]]);
+  const category=findCategory(categories,article.category)?.slug||categorySlug(article.category||'');
+  return <><PublicSiteHeader/><ArticleAnalytics articleId={article.id}/><main className="article-page"><AdSlot inventory={inventory} placement="article_header" articleId={article.id} category={category}/><div className="article-columns"><article className="detail"><span className="pill">{article.category||"NEWS"}</span><h1>{title}</h1><p className="muted">{article.published_at?new Date(article.published_at).toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata"}):""}</p>{article.hero_image_url&&<img className="hero" src={article.hero_image_url} alt={title}/>}<ArticleContent value={preferredArticleBody(article.body_te,article.body_en,article.dek_te)} inlineAd={<AdSlot inventory={inventory} placement="article_inline" articleId={article.id} category={category}/>}/><ArticleShare key={article.id} articleId={article.id} title={title} url={url} image={article.hero_image_url}/></article><aside className="article-sidebar"><AdSlot inventory={inventory} placement="article_sidebar" articleId={article.id} category={category}/><ArticleSidebar sections={sections}/></aside></div></main><PublicSiteFooter/></>;
 }

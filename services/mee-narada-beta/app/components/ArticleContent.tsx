@@ -1,5 +1,5 @@
 import React from "react";
-import {articleDocument,safeColor,safeHttpUrl,youtubeId,type RichNode} from "../../lib/rich-content";
+import {articleAdIndex,articleDocument,safeColor,safeHttpUrl,youtubeId,type RichNode} from "../../lib/rich-content";
 
 /** Render allowlisted document nodes with React; author input is never HTML. */
 function nodeContent(node:RichNode,key:React.Key):React.ReactNode{
@@ -34,4 +34,4 @@ function nodeContent(node:RichNode,key:React.Key):React.ReactNode{
     default:return <React.Fragment key={key}>{children}</React.Fragment>;
   }
 }
-export function ArticleContent({value}:{value:string}){return <div className="rich-article">{nodeContent(articleDocument(value),"article")}</div>}
+export function ArticleContent({value,inlineAd}:{value:string;inlineAd?:React.ReactNode}){const document=articleDocument(value),adIndex=inlineAd?articleAdIndex(document):-1;return <div className="rich-article">{adIndex<0?nodeContent(document,"article"):(document.content||[]).map((node,index)=><React.Fragment key={index}>{nodeContent(node,'article-'+index)}{index===adIndex&&inlineAd}</React.Fragment>)}</div>}

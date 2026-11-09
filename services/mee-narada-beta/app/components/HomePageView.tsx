@@ -7,6 +7,8 @@ import {VideoFilters} from './PublicVideoCards';
 import {titleOf,type Article,type Gallery} from '../../lib/db';
 import {featuredStories,matchesHomeCategory,type HomeSettings,type HomeSection} from '../../lib/homepage';
 import type {HomeContent} from '../../lib/homepage-data';
+import type {AdInventory} from '../../lib/advertising';
+import AdSlot from './AdSlot';
 
 const newsLayout=(section:HomeSection):NewsLayout=>section.preset==='lead-headlines'?'split':section.preset==='lead-cards'?'lead-grid':'compact';
 function StoryCard({article,variant=''}:{article:Article;variant?:string}){
@@ -21,17 +23,18 @@ function HomepageSection({section,content,preview}:{section:HomeSection;content:
   if(section.id==='galleries')return content.galleries.length?<section className="section-block"><div className="section-title"><h2>{section.title}</h2><Link href="/gallery">అన్నీ చూడండి →</Link></div><GalleryCards galleries={content.galleries.slice(0,section.limit)}/></section>:null;
   return <CategoryNews id={'news-'+section.id} title={section.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,section.id,content.categories)).slice(0,section.limit)} layout={newsLayout(section)} viewAll={'/?section='+section.id} preview={preview}/>;
 }
-export function HomePageView({settings,content,section='latest',preview=false}:{settings:HomeSettings;content:HomeContent;section?:string;preview?:boolean}){
+export function HomePageView({settings,content,section='latest',preview=false,adInventory}:{settings:HomeSettings;content:HomeContent;section?:string;preview?:boolean;adInventory?:AdInventory}){
   const found=findCategory(content.categories,section),selected=section==='galleries'?'galleries':found?.slug||'latest',category=settings.sections.find(row=>row.id===selected)||(found?{id:found.slug,title:categoryLabel(found),enabled:true,limit:24,preset:'lead-cards' as const}:undefined),galleryMode=selected==='galleries';
   const {lead,stories}=featuredStories(settings,content.news,content.pinned);
   return <div className="public-home-page"><SiteHeaderView navigation={content.navigation} editorLogin/>
+    {!preview&&adInventory&&(content.news.length>0||content.galleries.length>0||content.videos.length>0)&&<div className="wrap"><AdSlot inventory={adInventory} placement="home_header" category={found?.slug||''}/></div>}
     {settings.ticker.enabled&&<div className="ticker"><div className="wrap ticker-inner"><strong>{settings.ticker.label}</strong><span>{settings.ticker.text}</span></div></div>}
     <main className="wrap homepage"><div className="intro"><div><div className="eyebrow">{settings.intro.eyebrow}</div><h1 className="heading">{galleryMode?'ఫోటో గ్యాలరీలు':selected==='latest'?settings.intro.title:found?categoryLabel(found):category?.title}</h1></div><span className="intro-caption">{settings.intro.caption}</span></div>
       <nav className="category-strip" aria-label="News categories"><MenuLinks items={content.navigation.menus.categories} selected={selected}/></nav>
       {content.contentError&&<p className="notice" role="status">కొంత కంటెంట్ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి మళ్లీ ప్రయత్నించండి.</p>}
       {galleryMode?<section className="section-block"><div className="section-title"><h2>ఫోటో గ్యాలరీలు</h2></div><GalleryCards galleries={content.galleries}/>{!content.galleries.length&&<p className="muted">ఈ విభాగంలో ఇంకా ప్రచురించిన కంటెంట్ లేదు.</p>}</section>:selected==='latest'?<>
         {settings.featured.enabled&&lead&&<section className="lead-section" aria-label="Featured stories"><div className="lead-column"><StoryCard article={lead} variant="lead"/></div>{stories.length>0&&<aside className="side-column"><div className="sidebar-heading"><span className="live-dot"/> {settings.featured.title} <span className="sidebar-more">తాజా అప్‌డేట్స్</span></div>{stories.map(article=><StoryCard key={article.id} article={article} variant="compact"/>)}</aside>}</section>}
-        <div className="category-news-sections">{settings.sections.map(row=><HomepageSection key={row.id} section={row} content={content} preview={preview}/>)}</div>
+        {!preview&&adInventory&&lead&&<AdSlot inventory={adInventory} placement="home_feed"/>}<div className="category-news-sections">{settings.sections.map(row=><HomepageSection key={row.id} section={row} content={content} preview={preview}/>)}</div>
       </>:category&&<CategoryNews id={'news-'+selected} title={category.title} articles={content.news.filter(article=>matchesHomeCategory(article.category,category.id,content.categories))} layout={newsLayout(category)} heading={false} preview={preview}/>}
     </main><SiteFooterView navigation={content.navigation} beta/></div>;
 }

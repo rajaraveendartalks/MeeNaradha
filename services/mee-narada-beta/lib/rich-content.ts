@@ -2,6 +2,12 @@
 export type RichMark = { type: string; attrs?: Record<string, unknown> };
 export type RichNode = { type: string; text?: string; attrs?: Record<string, unknown>; marks?: RichMark[]; content?: RichNode[] };
 export const RICH_PREFIX = "MNRICH1:";
+/** Insert a single ad between complete paragraphs only in sufficiently long articles. */
+export function articleAdIndex(document:RichNode):number{
+ const nodes=document.content||[],paragraphs=nodes.map((row,index)=>row.type==='paragraph'?index:-1).filter(index=>index>=0);
+ const length=(node:RichNode):number=>(node.text||'').length+(node.content||[]).reduce((total,child)=>total+length(child),0);
+ return paragraphs.length>=5&&length(document)>=900?paragraphs[2]:-1;
+}
 const allowedNodes = new Set(["doc","paragraph","text","heading","blockquote","bulletList","orderedList","listItem","hardBreak","horizontalRule","codeBlock","image","youtube"]);
 const allowedMarks = new Set(["bold","italic","underline","strike","code","link","textStyle"]);
 export function safeHttpUrl(value: unknown): string | null {

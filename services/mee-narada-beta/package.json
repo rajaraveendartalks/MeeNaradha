@@ -9,7 +9,8 @@
     "test:share": "node --test tests/article-sharing.test.cjs",
     "test:studio": "node --test tests/studio.test.cjs tests/homepage.test.cjs tests/management.test.cjs && node tests/check-edge.cjs",
     "test:editorial": "node --test tests/editorial.test.cjs && node tests/check-edge.cjs",
-    "test:publishing": "node --test tests/publishing.test.cjs && node tests/check-edge.cjs"
+    "test:publishing": "node --test tests/publishing.test.cjs && node tests/check-edge.cjs",
+    "test:advertising": "node --test tests/advertising.test.cjs && node tests/check-edge.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
