@@ -5,7 +5,8 @@ import ArticleAnalytics from "../../components/ArticleAnalytics";
 import {cache} from "react";
 import {notFound} from "next/navigation";
 import {ArticleContent} from "../../components/ArticleContent";
-import {db,titleOf,type Article} from "../../../lib/db";
+import {db,titleOf} from "../../../lib/db";
+import {loadPublishedArticle,type ArticleRecord} from '../../../lib/article-routing';
 import {articleText,preferredArticleBody} from "../../../lib/rich-content";
 import {loadArticleSidebar} from '../../../lib/article-layout';
 import {emptyAdInventory,loadAdInventory} from '../../../lib/advertising';
@@ -13,11 +14,9 @@ import {categorySlug,findCategory,loadCategories} from '../../../lib/site-manage
 import AdSlot from '../../components/AdSlot';
 import ArticleSidebar from '../../components/ArticleSidebar';
 export const dynamic="force-dynamic";
-type ArticleRecord=Article&{dek_en:string|null};
 const getArticle=cache(async(slug:string):Promise<ArticleRecord|null>=>{
-  if(!db)return null;
-  const {data}=await db.from("news_articles").select("id,slug,headline_te,headline_en,dek_te,dek_en,body_te,body_en,hero_image_url,category,status,published_at,created_at").eq("slug",slug).eq("status","published").maybeSingle();
-  return data as ArticleRecord|null;
+  if(!db)throw new Error('The article service is temporarily unavailable.');
+  return loadPublishedArticle(db,slug);
 });
 const siteUrl=(process.env.NEXT_PUBLIC_SITE_URL||"https://www.meenarada.com").replace(/\/$/,"");
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
