@@ -18,6 +18,16 @@ export function draftFromPost(post:StudioPost):PostDraft {
   return {...blankDraft,...Object.fromEntries(Object.keys(blankDraft).map(key=>[key,key==="is_breaking"?Boolean(post.is_breaking):post[key as keyof StudioPost]??""])),headline_te:post.headline_te||post.headline_en};
 }
 export function makeSlug(title:string):string { return title.trim().normalize("NFC").toLowerCase().replace(/[^a-z0-9\u0c00-\u0c7f]+/g,"-").replace(/^-|-$/g,"").slice(0,120)||"post"; }
+export function postSlug(draft:PostDraft,original?:Pick<StudioPost,'slug'>|null):string{
+  const input=draft.slug.trim();
+  // Ordinary edits and clearing the optional field preserve an existing permalink.
+  if(original&&(!input||draft.slug===original.slug||input===original.slug))return original.slug;
+  let slug=input||makeSlug(draft.headline_en.trim()||draft.headline_te);
+  if(input)try{slug=decodeURIComponent(slug)}catch{/* A literal percent remains a valid saved character. */}
+  slug=slug.normalize('NFC');
+  if(!slug||/[\/\\?#\s\u0000-\u001f\u007f]/u.test(slug))throw Error("The URL slug cannot contain spaces, slashes, ? or #. Enter just the words for the article address.");
+  return slug;
+}
 export function errorMessage(error:unknown):string {
   if(error&&typeof error==="object"&&"code" in error){if(error.code==="42501")return "Your account cannot perform this action. Please contact your administrator.";if(error.code==="PGRST301")return "Your session expired. Please sign in again."}
   return error instanceof Error?error.message:error&&typeof error==="object"&&"message" in error?String(error.message):"Something went wrong. Please try again.";
@@ -45,8 +55,7 @@ export function postPayload(draft:PostDraft,status:PostStatus,original?:StudioPo
   const sourceUrl=draft.source_url.trim(),hero=draft.hero_image_url.trim();
   if(sourceUrl&&!safeHttpUrl(sourceUrl))throw Error("Enter a valid source URL starting with https:// or http://.");
   if(hero&&!safeHttpUrl(hero))throw Error("Choose a featured image or enter a valid image URL.");
-  const slug=draft.slug.trim()||original?.slug||makeSlug(draft.headline_en||headline);
-  if(!slug||/[/?#\s]/.test(slug))throw Error("The URL slug cannot contain spaces, slashes, ? or #.");
+  const slug=postSlug(draft,original);
   return {headline_te:draft.headline_te.trim()||null,headline_en:draft.headline_en.trim()||headline,body_te:bodyTe,body_en:bodyEn,dek_te:draft.dek_te.trim()||null,dek_en:draft.dek_en.trim()||null,hero_image_url:hero||null,category:draft.category||"movies",slug,source_name:draft.source_name.trim()||null,source_url:sourceUrl||null,is_breaking:draft.is_breaking,status,published_at:status==="published"?(original?.published_at||now):(original?.published_at||null)};
 }
 export async function savePost(client:SupabaseClient,draft:PostDraft,status:PostStatus,original?:StudioPost|null,authorId?:string|null):Promise<StudioPost>{
