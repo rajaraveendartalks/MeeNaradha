@@ -43,6 +43,8 @@ Validate with `npm run test:publishing`, the existing test suites, `npm run buil
 
 Apply `supabase/migrations/20261109070000_article_layout_and_advertising.sql` and deploy `supabase/functions/advertising` with the explicit `deno.json` import map. Its `verify_jwt=false` entrypoint validates the project API key in its handler, supports modern publishable keys and keeps privileged credentials in the Edge runtime. Do not change existing function authentication settings.
 
+Apply the follow-up legacy_manual_trailer_selection migration as well. The manual trailer picker includes published unclassified videos from older imports without changing their metadata. Classified songs and short films are excluded.
+
 The sidebar receives a one-time initial selection from existing published content. Editors manage these stored selections manually thereafter. Direct campaigns start paused; no paid sample campaigns are created. Public campaign records contain banner metadata only, with row policies hiding paused, future and ended campaigns. Enquiries and raw measurement records live in private tables, with role-checked inbox/report RPCs.
 
 Google fallback is off by default. It requires an approved publisher ID, slot IDs, confirmation of the existing certified CMP setup, and a working `__tcfapi` consent API. The app waits for that API before loading Google's script. For GDPR-covered visits it conservatively requires consent for Google and purposes 1, 3 and 4. Staff browsing and browser privacy signals suppress Google requests and first-party ad measurement. The app does not install or certify a CMP; use the approved consent platform's normal deployment procedure.

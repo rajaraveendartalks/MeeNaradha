@@ -6,15 +6,17 @@ select set_config('request.jwt.claims',jsonb_build_object('sub',current_setting(
 set local role authenticated;
 select public.studio_set_user_role(current_setting('ads_test.editor')::uuid,'editor');
 do $test$
-declare article uuid;other_article uuid;draft uuid;gallery uuid;trailer uuid;campaign uuid;config jsonb;version integer;blocked boolean:=false;
+declare article uuid;other_article uuid;draft uuid;gallery uuid;trailer uuid;legacy_trailer uuid;song uuid;campaign uuid;config jsonb;version integer;blocked boolean:=false;
 begin
  insert into public.news_articles(slug,headline_en,body_en,category,status,published_at) values('ads-article-'||gen_random_uuid(),'Rolled-back ad article',repeat('Article paragraph. ',100),'movies','published',now()) returning id into article;
  insert into public.news_articles(slug,headline_en,body_en,category,status,published_at) values('ads-related-'||gen_random_uuid(),'Rolled-back related story','Related content','movies','published',now()) returning id into other_article;
  insert into public.news_articles(slug,headline_en,body_en,category,status) values('ads-draft-'||gen_random_uuid(),'Private draft','Draft content','movies','draft') returning id into draft;
  insert into public.image_galleries(slug,title_en,status,published_at) values('ads-gallery-'||gen_random_uuid(),'Rolled-back selected gallery','published',now()) returning id into gallery;
  insert into public.videos(slug,title_en,content_type,video_url,status,published_at) values('ads-trailer-'||gen_random_uuid(),'Rolled-back selected trailer','trailer','https://www.youtube.com/watch?v=dQw4w9WgXc','published',now()) returning id into trailer;
+ insert into public.videos(slug,title_en,content_type,video_url,status,published_at) values('ads-legacy-trailer-'||gen_random_uuid(),'Rolled-back legacy trailer',null,'https://www.youtube.com/watch?v=dQw4w9WgXc','published',now()) returning id into legacy_trailer;
+ insert into public.videos(slug,title_en,content_type,video_url,status,published_at) values('ads-song-'||gen_random_uuid(),'Rolled-back song','song','https://www.youtube.com/watch?v=dQw4w9WgXc','published',now()) returning id into song;
  perform set_config('ads_test.article',article::text,true);perform set_config('ads_test.draft',draft::text,true);
- config:=jsonb_build_object('enabled',true,'modules',jsonb_build_array(jsonb_build_object('kind','stories','title','Manual stories','enabled',true,'ids',jsonb_build_array(other_article,article)),jsonb_build_object('kind','galleries','title','Featured gallery','enabled',true,'ids',jsonb_build_array(gallery)),jsonb_build_object('kind','trailers','title','Featured trailer','enabled',true,'ids',jsonb_build_array(trailer))));
+ config:=jsonb_build_object('enabled',true,'modules',jsonb_build_array(jsonb_build_object('kind','stories','title','Manual stories','enabled',true,'ids',jsonb_build_array(other_article,article)),jsonb_build_object('kind','galleries','title','Featured gallery','enabled',true,'ids',jsonb_build_array(gallery)),jsonb_build_object('kind','trailers','title','Featured trailer','enabled',true,'ids',jsonb_build_array(trailer,legacy_trailer))));
  select revision into version from public.article_sidebar_layouts where id='default';
  perform set_config('ads_test.config',config::text,true);
  update public.article_sidebar_layouts set config=current_setting('ads_test.config')::jsonb where id='default' and revision=version;
@@ -25,6 +27,8 @@ begin
  insert into public.article_sidebar_layouts(id,article_id,use_default,config) values(draft::text,draft,false,config);
  begin update public.article_sidebar_layouts set config=jsonb_set(current_setting('ads_test.config')::jsonb,'{modules,0,ids}',jsonb_build_array(draft)) where id=article::text;exception when invalid_parameter_value then blocked:=true;end;
  if not blocked then raise exception 'Unpublished sidebar story accepted';end if;
+ blocked:=false;begin update public.article_sidebar_layouts set config=jsonb_set(current_setting('ads_test.config')::jsonb,'{modules,2,ids}',jsonb_build_array(song)) where id=article::text;exception when invalid_parameter_value then blocked:=true;end;
+ if not blocked then raise exception 'Classified song accepted as a trailer';end if;
  blocked:=false;begin update public.site_ad_settings as s set config=jsonb_set(s.config,'{google_enabled}','true') where id='website';exception when invalid_parameter_value then blocked:=true;end;
  if not blocked then raise exception 'Google activation without configuration accepted';end if;
  for i in 1..4 loop

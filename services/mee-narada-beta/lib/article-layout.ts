@@ -31,13 +31,13 @@ function item(kind:SidebarKind,row:Record<string,unknown>):SidebarItem{
  return {id:String(row.id),title:titleOf(row),url:(kind==='stories'?'/article/':kind==='galleries'?'/gallery/':'/videos/')+encodeURIComponent(String(row.slug)),image:(kind==='stories'?row.hero_image_url:kind==='galleries'?row.cover_image_url:videoThumbnail(row as unknown as PublicVideo)) as string|null,kind};
 }
 export async function sidebarItems(client:SupabaseClient,kind:SidebarKind,ids:string[]):Promise<SidebarItem[]>{
- if(!ids.length)return [];let query=client.from(tables[kind]).select(columns[kind]).eq('status','published').in('id',ids);if(kind==='trailers')query=query.eq('content_type','trailer');const result=await query;if(result.error)throw result.error;
+ if(!ids.length)return [];let query=client.from(tables[kind]).select(columns[kind]).eq('status','published').in('id',ids);if(kind==='trailers')query=query.or('content_type.eq.trailer,content_type.is.null');const result=await query;if(result.error)throw result.error;
  const rows=(result.data||[]) as unknown as Record<string,unknown>[];return ids.flatMap(id=>{const found=rows.find(row=>row.id===id);return found?[item(kind,found)]:[]});
 }
 export async function searchSidebarItems(client:SupabaseClient,kind:SidebarKind,search:string,page:number){
  let query=client.from(tables[kind]).select(columns[kind],{count:'exact'}).eq('status','published').order('created_at',{ascending:false}).order('id',{ascending:false});
- if(kind==='trailers')query=query.eq('content_type','trailer');
- const term=search.replace(/[(),.%\\]/g,' ').trim().slice(0,100),prefix=kind==='stories'?'headline':'title';if(term)query=query.or(prefix+'_te.ilike.%'+term+'%,'+prefix+'_en.ilike.%'+term+'%');
+ const term=search.replace(/[(),.%\\]/g,' ').trim().slice(0,100),prefix=kind==='stories'?'headline':'title',titles=prefix+'_te.ilike.%'+term+'%,'+prefix+'_en.ilike.%'+term+'%';
+ if(kind==='trailers')query=query.or(term?'and(or(content_type.eq.trailer,content_type.is.null),or('+titles+'))':'content_type.eq.trailer,content_type.is.null');else if(term)query=query.or(titles);
  const result=await query.range((page-1)*20,page*20-1);if(result.error)throw result.error;return {items:((result.data||[]) as unknown as Record<string,unknown>[]).map(row=>item(kind,row)),count:result.count||0};
 }
 export async function loadArticleSidebar(client:SupabaseClient,articleId:string){
