@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import type {SidebarItem,SidebarModule} from '../../lib/article-layout';
+import {publicHttpUrl} from '../../lib/publication-requests';
+export type PublicSidebarSection=SidebarModule&{items:SidebarItem[]};
+export function AdvertiseCard(){return <section className="article-advertise-card"><span>PARTNER WITH MEE NARADA</span><h2>మీ బ్రాండ్‌కు కొత్త ప్రేక్షకులు</h2><p>Movie promotions, launches and brand campaigns.</p><Link href="/advertise">Advertise With Us →</Link></section>}
+export default function ArticleSidebar({sections}:{sections:PublicSidebarSection[]}){return <>{sections.map(section=><section className={'article-sidebar-section article-sidebar-'+section.kind} key={section.kind}><h2>{section.title}</h2><div className="article-sidebar-items">{section.items.map(item=><Link className="article-sidebar-item" key={item.id} href={item.url}><div className="article-sidebar-image">{item.image&&publicHttpUrl(item.image)?<img src={item.image} alt="" loading="lazy"/>:<span>{section.kind==='trailers'?'Trailer':section.kind==='galleries'?'Gallery':'Mee Narada'}</span>}{section.kind==='trailers'&&<span className="article-trailer-play" aria-hidden="true">▶</span>}</div><h3>{item.title}</h3></Link>)}</div></section>)}<AdvertiseCard/></>}
