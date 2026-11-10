@@ -12,6 +12,7 @@
     "test:publishing": "node --test tests/publishing.test.cjs && node tests/check-edge.cjs",
     "test:advertising": "node --test tests/advertising.test.cjs && node tests/check-edge.cjs",
     "test:slugs": "node --test tests/article-routing.test.cjs",
+    "test:reactions": "node --test tests/article-reactions.test.cjs tests/reactions-cms.test.cjs && node tests/check-edge.cjs",
     "test:media-profiles": "node --test tests/image-processing.test.cjs tests/article-entities.test.cjs tests/media-profiles-ui.test.cjs"
   },
   "dependencies": {
