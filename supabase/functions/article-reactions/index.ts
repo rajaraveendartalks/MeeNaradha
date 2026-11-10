@@ -1,0 +1,13 @@
+import {createReactionHandler,ReactionError,type ReactionInput} from './handler.ts';
+const url=Deno.env.get('SUPABASE_URL')!,serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const checkedKeys=new Map<string,number>();let salt='',saltAt=0;
+async function rpc(name:string,payload:unknown){
+ const response=await fetch(url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:serviceKey,authorization:'Bearer '+serviceKey,'content-type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
+ if(!response.ok){const error=await response.json().catch(()=>({}));if(error.code==='P0429')throw new ReactionError(429,'The reaction limit was reached. Please try again later.');if(error.code==='P0404')throw new ReactionError(404,'This article is no longer available for reactions.');if(error.code==='22023')throw new ReactionError(400,'This reaction is not available for this article.');throw Error('Reaction storage unavailable')}return response.json();
+}
+async function authenticate(key:string){if((checkedKeys.get(key)||0)>Date.now())return true;const response=await fetch(url+'/rest/v1/news_articles?select=id&limit=0',{method:'HEAD',headers:{apikey:key},signal:AbortSignal.timeout(5000)});if(!response.ok)return false;if(checkedKeys.size>=50)checkedKeys.clear();checkedKeys.set(key,Date.now()+300000);return true}
+async function hash(values:string[]){if(!salt||Date.now()-saltAt>3600000){salt=await rpc('article_reaction_ingest_config',{});saltAt=Date.now()}const encoder=new TextEncoder(),key=await crypto.subtle.importKey('raw',encoder.encode(salt),{name:'HMAC',hash:'SHA-256'},false,['sign']);return Promise.all(values.map(async value=>[...new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode(value)))].map(byte=>byte.toString(16).padStart(2,'0')).join('')))}
+async function read(input:ReactionInput){const browser=input.browser_id?(await hash(['reaction-browser|'+input.browser_id]))[0]:null;return rpc('article_reaction_state',{p_article_id:input.article_id,p_browser_hash:browser})}
+async function react(input:ReactionInput,ip:string){const [browser,client]=await hash(['reaction-browser|'+input.browser_id,'reaction-ip|'+ip]);const result=await rpc('set_article_reaction',{p_article_id:input.article_id,p_browser_hash:browser,p_client_hash:client,p_reaction:input.reaction,p_operation_id:input.operation_id,p_version:input.version});if(result.conflict)throw new ReactionError(409,'Your reaction changed in another tab. The latest choice is shown.',result.state);return result}
+// This function validates the project API key itself; deploy with verify_jwt=false.
+Deno.serve(createReactionHandler({authenticate,read,react}));

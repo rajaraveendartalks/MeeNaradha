@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
-const root=path.resolve(__dirname,'../../..'),entries=['studio-users','article-analytics','publishing-requests','advertising'].map(name=>path.join(root,'supabase/functions',name,'index.ts')),virtual=path.join(root,'supabase/functions/studio-users/runtime-check.d.ts');
+const root=path.resolve(__dirname,'../../..'),entries=['studio-users','article-analytics','publishing-requests','advertising','article-reactions'].map(name=>path.join(root,'supabase/functions',name,'index.ts')),virtual=path.join(root,'supabase/functions/studio-users/runtime-check.d.ts');
 const options={noEmit:true,strict:true,skipLibCheck:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,moduleResolution:ts.ModuleResolutionKind.Bundler,allowImportingTsExtensions:true,esModuleInterop:true};
 const host=ts.createCompilerHost(options),getSource=host.getSourceFile.bind(host);
 host.getSourceFile=(file,language,...rest)=>file===virtual?ts.createSourceFile(file,'declare const Deno:{env:{get(name:string):string|undefined};serve(handler:(request:Request)=>Response|Promise<Response>):void};',language):getSource(file,language,...rest);
