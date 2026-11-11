@@ -1,0 +1,1 @@
+window.MEE_NARADA_CONFIG = {"supabaseUrl": "https://sfykcmbgsuzlyksosjny.supabase.co", "publishableKey": "sb_publishable_fE_WedmQGDvkgfCgQzlP0g_RE-KLwp1", "siteUrl": "https://www.meenarada.com", "appOrigin": "https://mobile.meenarada.com"};

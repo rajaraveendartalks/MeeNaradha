@@ -1,6 +1,6 @@
 export type EventInput={article_id:string;kind:'view'|'share_click';platform:string;visitor_id:string};
 type Dependencies={authenticate:(key:string)=>Promise<boolean>;record:(input:EventInput,ip:string)=>Promise<boolean>};
-export const allowedAnalyticsOrigin=(origin:string)=>['https://www.meenarada.com','https://meenarada.com','https://mee-narada-beta.vercel.app','https://mee-narada-creator-staging.vercel.app'].includes(origin)||/^https:\/\/mee-narada-beta-[a-z0-9-]+-rajaraveendar\.vercel\.app$/.test(origin);
+export const allowedAnalyticsOrigin=(origin:string)=>['https://www.meenarada.com','https://meenarada.com','https://mee-narada-beta.vercel.app','https://mee-narada-creator-staging.vercel.app','https://mobile.meenarada.com','https://mee-narada-mobile-app-design.rajaraveendartalks.chatgpt.site'].includes(origin)||/^https:\/\/mee-narada-beta-[a-z0-9-]+-rajaraveendar\.vercel\.app$/.test(origin);
 const platforms=new Set(['facebook','x','instagram','whatsapp','reddit','telegram','linkedin','pinterest','email','copy','more']);
 const uuid=(value:unknown)=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 class PayloadTooLarge extends Error{}

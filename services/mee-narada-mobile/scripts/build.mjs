@@ -1,0 +1,11 @@
+import {cp,mkdir,rm,readFile,writeFile} from 'node:fs/promises';
+import {build} from 'esbuild';
+await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('web','dist',{recursive:true});
+await mkdir('dist/assets',{recursive:true});
+for(const [source,target] of [['meenarada-logo.webp','logo.webp'],['fonts/noto-sans-telugu-400.woff2','telugu-400.woff2'],['fonts/noto-sans-telugu-700.woff2','telugu-700.woff2'],['fonts/mandali.woff2','mandali.woff2'],['fonts/noto-sans-telugu-OFL.txt','Noto-Sans-Telugu-OFL.txt']])await cp('../mee-narada-beta/public/'+source,'dist/assets/'+target);
+await cp('licenses/Mandali-OFL.txt','dist/assets/Mandali-OFL.txt');
+await build({entryPoints:['src/content.ts'],outfile:'dist/content.js',bundle:true,format:'iife',globalName:'MeeNaradaRich',target:'es2020',minify:true});
+await build({entryPoints:['src/native.js'],outfile:'dist/native.js',bundle:true,format:'iife',globalName:'MeeNaradaNative',target:'es2020',minify:true});
+const config=JSON.parse(await readFile('capacitor.config.json','utf8'));
+if(config.server?.url)throw Error('Android builds must use bundled assets, not a remote design URL.');
+console.log('Built Mee Narada mobile app assets.');

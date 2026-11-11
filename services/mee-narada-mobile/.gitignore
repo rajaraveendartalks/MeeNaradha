@@ -1,0 +1,12 @@
+node_modules/
+dist/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+*.apk
+*.aab
+*.keystore
+android/
+web/assets/
+.test-signing/

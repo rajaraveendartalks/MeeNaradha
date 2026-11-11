@@ -1,0 +1,20 @@
+{
+  "appId": "com.meenarada.app",
+  "appName": "Mee Narada",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "mobile.meenarada.com"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "minWebViewVersion": 110
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#bf193b",
+      "overlaysWebView": true
+    }
+  }
+}

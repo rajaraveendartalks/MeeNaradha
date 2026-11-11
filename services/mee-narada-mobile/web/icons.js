@@ -1,0 +1,7 @@
+(function(){
+ const paths={home:'M3 10.5 12 3l9 7.5M5 9v12h5v-7h4v7h5V9',search:'M20 20l-5-5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0',photo:'M4 3h16v18H4zM4 16l5-5 4 4 3-3 4 4M15 7h.01',play:'m9 5 11 7-11 7z',video:'M3 5h14v14H3zM17 9l5-3v12l-5-3',bookmark:'M6 3h12v19l-6-4-6 4z',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',back:'m14 5-7 7 7 7',next:'m9 5 7 7-7 7',close:'m6 6 12 12M6 18 18 6',share:'M12 16V3m-5 5 5-5 5 5M5 12v9h14v-9',text:'M3 18 8 5l5 13M5 14h6m4 4 3-8 3 8m-5-3h4',heart:'M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-5 5 8 15 8 15S25 10 20 5',film:'M3 4h18v16H3zM7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4',globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c-5 5-5 13 0 18 5-5 5-13 0-18',music:'M9 18V5l12-2v13M9 9l12-2M9 18c0 4-7 4-7 1s7-4 7-1M21 16c0 4-7 4-7 1s7-4 7-1',star:'m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z',link:'m10 14 4-4M8 16l-2 2a4 4 0 0 1-6-6l4-4m12 8 4-4a4 4 0 0 0-6-6l-2 2',sun:'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1',moon:'M21 14A9 9 0 0 1 10 3a9 9 0 1 0 11 11',whatsapp:'M21 12a9 9 0 0 1-13 8l-5 1 1-5A9 9 0 1 1 21 12M8 7c-3 3 6 12 9 6l-3-1-1 1-3-3 1-1z',check:'m5 12 4 4L20 5',arrow:'M5 12h14m-5-5 5 5-5 5'};
+ const icon=(name,extra='')=>`<svg class="icon ${extra}" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name]||paths.film}"/></svg>`;
+ const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+window.MeeNaradaUI={icon,escape:e};
+})();

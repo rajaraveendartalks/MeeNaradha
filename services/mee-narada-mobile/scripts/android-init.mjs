@@ -1,0 +1,14 @@
+import {access,readFile,writeFile,mkdir,readdir,cp} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import sharp from 'sharp';
+try{await access('android/app/build.gradle')}catch{const result=spawnSync(process.platform==='win32'?'npx.cmd':'npx',['cap','add','android'],{stdio:'inherit'});if(result.status)process.exit(result.status||1)}
+const gradlePath='android/app/build.gradle';let gradle=await readFile(gradlePath,'utf8');gradle=gradle.replace('versionName "1.0"','versionName "0.1.0"');
+if(!gradle.includes('applicationIdSuffix'))gradle=gradle.replace('buildTypes {','buildTypes {\n        debug {\n            applicationIdSuffix ".test"\n            versionNameSuffix "-test"\n        }');await writeFile(gradlePath,gradle);
+const manifestPath='android/app/src/main/AndroidManifest.xml';let manifest=await readFile(manifestPath,'utf8');manifest=manifest.replace('android:allowBackup="true"','android:allowBackup="false"');if(!manifest.includes('usesCleartextTraffic'))manifest=manifest.replace('<application','<application android:usesCleartextTraffic="false"');await writeFile(manifestPath,manifest);
+const res='android/app/src/main/res';await mkdir('android/app/src/debug/res/values',{recursive:true});await writeFile('android/app/src/debug/res/values/strings.xml','<resources><string name="app_name">Mee Narada Test</string><string name="title_activity_main">Mee Narada Test</string></resources>\n');
+await cp('native/MainActivity.java','android/app/src/main/java/com/meenarada/app/MainActivity.java');
+const brand=await sharp('../mee-narada-beta/public/meenarada-logo.webp').resize(356,148,{fit:'contain',background:'#000'}).png().toBuffer();const tile=await sharp({create:{width:512,height:512,channels:4,background:'#000'}}).composite([{input:brand,left:78,top:182}]).png().toBuffer();
+for(const [density,size] of [['mdpi',48],['hdpi',72],['xhdpi',96],['xxhdpi',144],['xxxhdpi',192]]){const dir=res+'/mipmap-'+density;await mkdir(dir,{recursive:true});for(const name of ['ic_launcher','ic_launcher_round','ic_launcher_foreground'])await sharp(tile).resize(size,size).png().toFile(dir+'/'+name+'.png')}
+await mkdir(res+'/drawable-nodpi',{recursive:true});await sharp(tile).resize(432,432).png().toFile(res+'/drawable-nodpi/ic_brand_foreground.png');await writeFile(res+'/drawable/ic_launcher_foreground.xml','<bitmap xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/ic_brand_foreground" android:gravity="fill" />\n');await writeFile(res+'/values/ic_launcher_background.xml','<resources><color name="ic_launcher_background">#000000</color></resources>\n');
+for(const dir of await readdir(res)){if(!dir.startsWith('drawable'))continue;try{await access(res+'/'+dir+'/splash.png');await sharp(tile).toFile(res+'/'+dir+'/splash.png')}catch{}}
+console.log('Android test package configured with Mee Narada branding.');
