@@ -83,3 +83,11 @@ Apply `supabase/migrations/20261110043345_article_reactions.sql` and deploy the 
 Writes use operation IDs and per-browser/article versions so retries are idempotent and stale tabs cannot overwrite newer votes. The card offers retry/status recovery after a lost response. Limits are 30 changes per minute / 200 per India day per browser and 120 per minute / 2,000 per day per IP identity. Counters reset in place; no scheduled deletion is installed. As with any anonymous endpoint, rate limits reduce repeated voting but do not prove a human identity.
 
 Validate with `npm run test:reactions`, the complete test suite, `npm run build`, the rolled-back `supabase/tests/article_reactions_rls.sql` in each target project and isolated staging HTTP/concurrency checks. Never seed public production votes for testing.
+
+## Homepage news presets
+
+`/admin/homepage` offers Feature + Compact Rows, Review Showcase (in the Reviews section) and reader-controlled Quick Reads, plus the existing layouts. News and review sections support manually selected, ordered published content, lead selection and visible item counts. Curated lists do not fill with unselected stories. Separate lookups keep older published pins available beyond the latest feed.
+
+Desktop and mobile previews use the real public renderer at 1,180px and 390px. Quick Reads occupies the desktop sidebar and follows the main content on mobile. Its buttons, arrow keys and swipe controls work without auto-rotation. Reviews have `/reviews` and `/review/[slug]` pages, using saved editorial ratings and published related artwork. Scores out of 10 convert to equivalent five-star values; unrated stories get no invented rating. New Reviews and all-news Quick Reads sections remain disabled until enabled and published in the CMS.
+
+Apply migrations `20261111142231_homepage_news_presets.sql` and `20261111143940_homepage_gallery_public_reads.sql`. They preserve existing staff policies and give anonymous visitors published-only review, OTT and gallery reads without staff-helper permission failures. Run `npm run test:home-presets`, all tests, both builds and the rolled-back `supabase/tests/homepage_news_presets_rls.sql` in both databases. Detailed behavior and release notes are in `docs/homepage-management.md` at repository root.

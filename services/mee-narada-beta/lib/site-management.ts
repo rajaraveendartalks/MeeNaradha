@@ -7,7 +7,7 @@ export const categoryLabel=(category:ContentCategory,english=false)=>english?cat
 export const categoryValues=(category:Pick<ContentCategory,'slug'|'aliases'>)=>[category.slug,...category.aliases];
 export function findCategory(categories:ContentCategory[],value:string|null){return categories.find(category=>categoryValues(category).some(alias=>alias.toLowerCase()===(value||'').toLowerCase()))}
 export const categorySlug=(value:string)=>value.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,64);
-const reserved=new Set(['latest','videos','galleries','short-films','all','admin']);
+const reserved=new Set(['latest','videos','galleries','short-films','all','admin','all-news','reviews','quick-reads']);
 export function categoryPayload(category:ContentCategory){
   if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category.slug)||category.slug.length>64||reserved.has(category.slug))throw Error('Use an English category slug with letters, numbers and hyphens.');
   if(!category.name_en.trim()||category.name_en.trim().length>80||category.name_te.length>100||category.description.length>500)throw Error('Add a category name and keep the description under 500 characters.');

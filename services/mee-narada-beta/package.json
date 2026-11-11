@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev-server.cjs",
     "build": "next build",
     "start": "next start",
     "test:share": "node --test tests/article-sharing.test.cjs",
@@ -13,6 +13,7 @@
     "test:advertising": "node --test tests/advertising.test.cjs && node tests/check-edge.cjs",
     "test:slugs": "node --test tests/article-routing.test.cjs",
     "test:reactions": "node --test tests/article-reactions.test.cjs tests/reactions-cms.test.cjs && node tests/check-edge.cjs",
+    "test:home-presets": "node --test tests/homepage.test.cjs tests/homepage-presets.test.cjs",
     "test:media-profiles": "node --test tests/image-processing.test.cjs tests/article-entities.test.cjs tests/media-profiles-ui.test.cjs"
   },
   "dependencies": {
