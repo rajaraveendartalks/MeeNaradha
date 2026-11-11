@@ -2,6 +2,7 @@ import "./style.css";
 import './fonts.css';
 import './advertising.css';
 import './reactions.css';
+import './home-presets.css';
 import {db} from '../lib/db';
 import {defaultTypography,loadTypography,typographyVariables} from '../lib/typography';
 import AuthLinkRedirect from './components/AuthLinkRedirect';
