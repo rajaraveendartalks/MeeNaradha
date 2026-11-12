@@ -1,0 +1,34 @@
+{
+  "name": "mee-narada-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "sync:android": "npm run android:init && cap sync android",
+    "test": "node --test tests/*.test.cjs",
+    "android:debug": "npm run sync:android && node scripts/android-build.mjs",
+    "android:init": "npm run build && node scripts/android-init.mjs",
+    "ios:init": "npm run build && node scripts/ios-init.mjs",
+    "sync:ios": "npm run ios:init && cap sync ios",
+    "ios:simulator": "npm run sync:ios && node scripts/ios-build.mjs simulator",
+    "ios:device": "npm run sync:ios && node scripts/ios-build.mjs device",
+    "ios:open": "npm run sync:ios && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "esbuild": "0.25.12",
+    "jsdom": "26.1.0",
+    "plist": "3.1.1",
+    "sharp": "0.34.5",
+    "xcode": "4.0.0"
+  }
+}
