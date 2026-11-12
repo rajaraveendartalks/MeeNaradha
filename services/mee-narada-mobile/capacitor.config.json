@@ -4,7 +4,13 @@
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
+    "iosScheme": "capacitor",
     "hostname": "mobile.meenarada.com"
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#ffffff",
+    "scrollEnabled": false
   },
   "android": {
     "allowMixedContent": false,

@@ -1,6 +1,8 @@
-# Mee Narada Android app
+# Mee Narada mobile apps
 
 The approved red-and-gold mobile design, connected to the existing production CMS. Publishing remains in Content Studio; readers refresh the app to retrieve published articles, curated homepage stories, galleries, videos and reviews.
+
+Android test APK support is implemented. The iPhone/iPad project, Mac build commands and TestFlight handoff are documented in [IOS.md](IOS.md).
 
 ## Reader features
 
@@ -8,7 +10,7 @@ The approved red-and-gold mobile design, connected to the existing production CM
 - Gallery albums, trailer links, native Android sharing and website share links.
 - Device-local bookmarks, recently opened saved articles for offline reading, Telugu fonts, text size and dark mode.
 - Existing shared article reactions with durable operation IDs and safe retry after interrupted requests.
-- Existing article analytics on native Android only, respecting usage opt-out, Do Not Track and Global Privacy Control. Browser previews do not generate article analytics.
+- Existing article analytics on native devices only, respecting usage opt-out, Do Not Track and Global Privacy Control. Browser previews do not generate article analytics.
 - Explicit loading, offline, retry, withdrawn-article and unavailable-content states.
 
 ## Build
@@ -30,7 +32,7 @@ Set `ANDROID_HOME` or `ANDROID_SDK_ROOT` to your SDK path. Optionally set `MNR_G
 
 `web/config.js` contains the public CMS endpoint and publishable client key. It contains no service-role credentials. Database RLS controls public reads. Native assets are bundled locally, using the HTTPS WebView origin `https://mobile.meenarada.com`; the app does not load a private preview website. Cleartext traffic and Android backup are disabled.
 
-The existing reaction and analytics Edge functions allow the exact native origin and existing private design-preview origin. Existing auth, validation, rate limits and all other allowed origins are preserved. No database migrations are required.
+The existing reaction and analytics Edge functions allow the exact Android HTTPS origin, iOS Capacitor origin and existing private design-preview origin. Existing auth, validation, rate limits and all other allowed origins are preserved. No database migrations are required.
 
 Bookmarks/preferences persist locally on this device; there is no reader account synchronization. Offline feed data expires after 24 hours. Cached article bodies are used only for network/server failures, never to bypass a successful withdrawal or access denial. Notification delivery and advertising SDKs are not included in this build.
 

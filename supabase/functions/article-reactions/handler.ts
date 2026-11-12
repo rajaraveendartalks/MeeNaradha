@@ -14,7 +14,7 @@ export function validateReactionInput(raw:unknown):{action:'read'|'react';input:
  return {action:'react',input:{article_id:value.article_id,browser_id:browser as string,reaction:value.reaction as ReactionKind|null,operation_id:value.operation_id,version:value.version}};
 }
 export function createReactionHandler(deps:Dependencies){return async(request:Request)=>{
- const origin=request.headers.get('origin')||'',allowed=['https://www.meenarada.com','https://meenarada.com','https://mee-narada-beta.vercel.app','https://mee-narada-creator-staging.vercel.app','https://mobile.meenarada.com','https://mee-narada-mobile-app-design.rajaraveendartalks.chatgpt.site'].includes(origin)||/^https:\/\/mee-narada-(?:beta|creator-staging)-[a-z0-9-]+-rajaraveendar\.vercel\.app$/.test(origin);
+ const origin=request.headers.get('origin')||'',allowed=['https://www.meenarada.com','https://meenarada.com','https://mee-narada-beta.vercel.app','https://mee-narada-creator-staging.vercel.app','https://mobile.meenarada.com','capacitor://mobile.meenarada.com','https://mee-narada-mobile-app-design.rajaraveendartalks.chatgpt.site'].includes(origin)||/^https:\/\/mee-narada-(?:beta|creator-staging)-[a-z0-9-]+-rajaraveendar\.vercel\.app$/.test(origin);
  if(!allowed)return new Response(null,{status:403});
  const headers={'access-control-allow-origin':origin,'access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'content-type, apikey','cache-control':'no-store',vary:'Origin'},reply=(status:number,value:unknown)=>Response.json(value,{status,headers});
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});if(request.method!=='POST')return reply(405,{error:'Use the article reaction buttons.'});

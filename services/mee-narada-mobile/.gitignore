@@ -10,3 +10,7 @@ android/build/
 android/
 web/assets/
 .test-signing/
+ios/
+build/
+*.ipa
+*.xcarchive

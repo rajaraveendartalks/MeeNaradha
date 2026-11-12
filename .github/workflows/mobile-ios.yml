@@ -1,0 +1,71 @@
+name: Mee Narada iOS build
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mobile-ios.yml'
+      - 'services/mee-narada-mobile/**'
+      - 'services/mee-narada-beta/lib/rich-content.ts'
+      - 'services/mee-narada-beta/public/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meenarada-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compile iPhone simulator and device apps
+    runs-on: macos-15
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: services/mee-narada-mobile
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: services/mee-narada-mobile/package-lock.json
+      - name: Select installed stable Xcode 26 or newer
+        run: |
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          apps=[]
+          for p in Path('/Applications').glob('Xcode_*.app'):
+              m=re.fullmatch(r'Xcode_(\d+(?:\.\d+)*)\.app',p.name)
+              if m:
+                  version=tuple(map(int,m.group(1).split('.')))
+                  if version>=(26,): apps.append((version,p))
+          if not apps: raise SystemExit('Xcode 26+ is required by Capacitor 8.')
+          developer=max(apps,key=lambda entry:entry[0])[1]/'Contents/Developer'
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('DEVELOPER_DIR='+str(developer)+'\n')
+          print('Selected',developer)
+          PY
+      - run: xcodebuild -version
+      - run: npm ci
+      - run: npm run sync:ios
+      - run: npm test
+      - name: Validate Apple metadata
+        run: plutil -lint ios/App/App/Info.plist ios/App/App/PrivacyInfo.xcprivacy
+      - name: Build iPhone and iPad Simulator app
+        run: node scripts/ios-build.mjs simulator
+      - name: Compile unsigned iPhone device app
+        run: node scripts/ios-build.mjs device
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Mee-Narada-iOS-v0.1.0-builds
+          path: |
+            services/mee-narada-mobile/build/ios-simulator/*.zip
+            services/mee-narada-mobile/build/ios-simulator/README.txt
+            services/mee-narada-mobile/build/ios-device/*.zip
+            services/mee-narada-mobile/build/ios-device/README.txt
+          if-no-files-found: error
+          retention-days: 14

@@ -7,5 +7,5 @@ await cp('licenses/Mandali-OFL.txt','dist/assets/Mandali-OFL.txt');
 await build({entryPoints:['src/content.ts'],outfile:'dist/content.js',bundle:true,format:'iife',globalName:'MeeNaradaRich',target:'es2020',minify:true});
 await build({entryPoints:['src/native.js'],outfile:'dist/native.js',bundle:true,format:'iife',globalName:'MeeNaradaNative',target:'es2020',minify:true});
 const config=JSON.parse(await readFile('capacitor.config.json','utf8'));
-if(config.server?.url)throw Error('Android builds must use bundled assets, not a remote design URL.');
+if(config.server?.url)throw Error('Native builds must use bundled assets, not a remote design URL.');
 console.log('Built Mee Narada mobile app assets.');
